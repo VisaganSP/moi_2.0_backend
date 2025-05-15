@@ -1,0 +1,1016 @@
+{
+	"info": {
+		"_postman_id": "46600822-6b84-4403-9270-00c652657688",
+		"name": "moi_online",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "41774778"
+	},
+	"item": [
+		{
+			"name": "Authentication Endpoints",
+			"item": [
+				{
+					"name": "RegisterUser",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"visagan\",\n    \"email\": \"visagan@example.com\",\n    \"password\": \"12345678\"\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5001/api/auth/register",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "LoginUser",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"johndoe@example.com\",\n    \"password\": \"12345678\"\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5001/api/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetCurrentUser",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/auth/me",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"auth",
+								"me"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Function Endpoints (Admin Only)",
+			"item": [
+				{
+					"name": "Get All Functions",
+					"item": [
+						{
+							"name": "BasicQuery",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "WithPagination",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions?page=1&limit=10",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "WithSearch",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions?search=Wedding",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions"
+									],
+									"query": [
+										{
+											"key": "search",
+											"value": "Wedding"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "WithPagination&Search",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions?page=1&limit=10&search=Wedding",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "10"
+										},
+										{
+											"key": "search",
+											"value": "Wedding"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "CreateFunction",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"function_name\": \"Wedding Reception\",\n    \"function_owner_name\": \"John Doe\",\n    \"function_owner_city\": \"Chennai\",\n    \"function_owner_address\": \"123 Main St\",\n    \"function_owner_phno\": \"9876543210\",\n    \"function_amt_spent\": 500000,\n    \"function_hero_name\": \"Groom Name\",\n    \"function_heroine_name\": \"Bride Name\",\n    \"function_held_place\": \"Golden Palace\",\n    \"function_held_city\": \"Chennai\",\n    \"function_start_date\": \"2025-06-15T00:00:00.000Z\",\n    \"function_start_time\": \"11:00 AM\",\n    \"function_end_date\": \"2025-06-15T00:00:00.000Z\",\n    \"function_end_time\": \"10:00 PM\",\n    \"function_total_days\": 1,\n    \"function_bill_details\": {\n      \"owner_name\": \"John Doe\",\n      \"owner_occupation\": \"Software Engineer\",\n      \"wife_name\": \"Jane Doe\",\n      \"wife_occupation\": \"Doctor\",\n      \"function_place\": \"Golden Palace\",\n      \"function_city\": \"Chennai\"\n    }\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5001/api/functions",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"functions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetFunctionByID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/functions/wedding_reception-john_doe-chennai-2025-06-15-11:00_am",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"functions",
+								"wedding_reception-john_doe-chennai-2025-06-15-11:00_am"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UpdateFunctionByID",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"function_name\": \"Wedding Reception - Updated\",\n    \"function_amt_spent\": 550000,\n    \"function_bill_details\": {\n      \"owner_name\": \"John Doe Updated\",\n      \"owner_occupation\": \"Senior Software Engineer\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5001/api/functions/wedding_reception-john_doe-chennai-2025-06-15-11:00_am",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"functions",
+								"wedding_reception-john_doe-chennai-2025-06-15-11:00_am"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DeleteFunctionByID",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/functions/wedding_reception-john_doe-chennai-2025-06-15-11:00_am",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"functions",
+								"wedding_reception-john_doe-chennai-2025-06-15-11:00_am"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetDeletedFunctions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/functions/deleted",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"functions",
+								"deleted"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RestoreDeletedFunctionByID",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/functions/wedding_reception-john_doe-chennai-2025-06-15-11:00_am/restore",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"functions",
+								"wedding_reception-john_doe-chennai-2025-06-15-11:00_am",
+								"restore"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAllFunctionByDateRange",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/functions/date-range?startDate=2025-06-01&endDate=2025-06-30",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"functions",
+								"date-range"
+							],
+							"query": [
+								{
+									"key": "startDate",
+									"value": "2025-06-01"
+								},
+								{
+									"key": "endDate",
+									"value": "2025-06-30"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetDeletedFunctionsWithPagination",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/functions/deleted?page=1&limit=10",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"functions",
+								"deleted"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DeleteFunctionByIDPermanently",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/functions/wedding_reception-john_doe-chennai-2025-06-15-11:00_am/permanent",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"functions",
+								"wedding_reception-john_doe-chennai-2025-06-15-11:00_am",
+								"permanent"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Payer Endpoints",
+			"item": [
+				{
+					"name": "Unique Payer Data",
+					"item": [
+						{
+							"name": "GetUniquePayerNames",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/payers/unique/names",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"payers",
+										"unique",
+										"names"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetUniquePayerGifts",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/payers/unique/gifts",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"payers",
+										"unique",
+										"gifts"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetUniquePayerRelation",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/payers/unique/relations",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"payers",
+										"unique",
+										"relations"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetUniquePayerCities",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/payers/unique/cities",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"payers",
+										"unique",
+										"cities"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetUniquePayerWorkTypes",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/payers/unique/works",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"payers",
+										"unique",
+										"works"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "CreatePayer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"function_id\": \"wedding_reception-john_doe-chennai-2025-06-15-11:00_am\",\n    \"function_name\": \"Wedding Reception\",\n    \"payer_name\": \"Rani\",\n    \"payer_phno\": \"9876543210\",\n    \"payer_work\": \"Full Stack\",\n    \"payer_given_object\": \"Cash\",\n    \"payer_cash_method\": \"Cash\",\n    \"payer_amount\": 1000,\n    \"payer_gift_name\": \"\",\n    \"payer_relation\": \"Friend\",\n    \"payer_city\": \"Madurai\",\n    \"payer_address\": \"456 Park Avenue\",\n    \"current_date\": \"2025-05-12T12:00:00.000Z\",\n    \"current_time\": \"2:00 PM\"\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5001/api/payers",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"payers"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAllPayers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/payers?function_id=wedding_reception-john_doe-chennai-2025-06-15-11:00_am&page=1&limit=10",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"payers"
+							],
+							"query": [
+								{
+									"key": "function_id",
+									"value": "wedding_reception-john_doe-chennai-2025-06-15-11:00_am"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetPayerByID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/payers/6824cbfaf14718f3a719678e",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"payers",
+								"6824cbfaf14718f3a719678e"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UpdatePayerByID",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"payer_amount\": 30000,\n    \"payer_cash_method\": \"Phonepe\"\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5001/api/payers/6824cbfaf14718f3a719678e",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"payers",
+								"6824cbfaf14718f3a719678e"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DeletePayerByID",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/payers/6824cbfaf14718f3a719678e",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"payers",
+								"6824cbfaf14718f3a719678e"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetDeletedPayers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/payers/deleted",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"payers",
+								"deleted"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RestorePayerByID",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/payers/6824cbfaf14718f3a719678e/restore",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"payers",
+								"6824cbfaf14718f3a719678e",
+								"restore"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "PermanentlyDeletePayerByID",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/payers/6824cbfaf14718f3a719678e/permanent",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"payers",
+								"6824cbfaf14718f3a719678e",
+								"permanent"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetPayersByFunction",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/functions/wedding_reception-john_doe-chennai-2025-06-15-11:00_am/payers?page=1&limit=10",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"functions",
+								"wedding_reception-john_doe-chennai-2025-06-15-11:00_am",
+								"payers"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetTotalPaymentByFunction",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/functions/wedding_reception-john_doe-chennai-2025-06-15-11:00_am/total-payment",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"functions",
+								"wedding_reception-john_doe-chennai-2025-06-15-11:00_am",
+								"total-payment"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetPayerByPhoneNumber",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/payers/phone/9876543212",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"payers",
+								"phone",
+								"9876543212"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

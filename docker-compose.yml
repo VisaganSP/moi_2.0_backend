@@ -1,0 +1,84 @@
+services:
+  # MongoDB service
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    networks:
+      - mern-app-network
+
+  # MongoDB Management UI (MongoDB Compass alternative)
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=password
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_BASICAUTH_USERNAME=
+      - ME_CONFIG_BASICAUTH_PASSWORD=
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+      - ME_CONFIG_MONGODB_AUTH_DATABASE=admin
+    depends_on:
+      - mongo
+    networks:
+      - mern-app-network
+
+  # Redis service
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --requirepass redispassword
+    networks:
+      - mern-app-network
+
+  # Backend API service
+  server:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: server
+    restart: always
+    ports:
+      - "5001:5000"  # Changed from 5000:5000 to 5001:5000
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - mongo
+      - redis
+    environment:
+      - NODE_ENV=development
+      - PORT=5000  # Keep this as 5000, it's the internal port
+      - MONGO_URI=mongodb://admin:password@mongo:27017/moi_software_db?authSource=admin
+      - REDIS_URL=redis://:redispassword@redis:6379
+      - JWT_SECRET=visagan_the_software_engineer
+      - JWT_EXPIRE=30d
+    networks:
+      - mern-app-network
+
+networks:
+  mern-app-network:
+    driver: bridge
+
+# Keep container running without starting the app
+# command: tail -f /dev/null
+
+volumes:
+  mongo-data:
+  redis-data:

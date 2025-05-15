@@ -1,0 +1,9 @@
+Admin:
+Email - visagan@example.com
+Password - 12345678
+Token - eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q
+
+User:
+Email - johndoe@example.com
+Password - 12345678
+Token - eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA
