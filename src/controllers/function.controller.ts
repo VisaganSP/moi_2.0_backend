@@ -4,6 +4,8 @@ import Function from '../models/Function.model';
 import { ErrorResponse } from '../utils/errorResponse';
 import { AuthenticatedRequest } from '../types';
 import { invalidateCacheByPattern } from '../utils/cacheUtils';
+import { findChangedFields, sanitizeForEditLog } from '../utils/editLogHelpers';
+import EditLog from '../models/Editlog.model';
 
 // @desc    Create a new function (Admin only)
 // @route   POST /api/functions
@@ -166,6 +168,15 @@ export const getFunctionById = asyncHandler(
 // @access  Private/Admin
 export const updateFunction = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    // Extract reason_for_edit from request body
+    const { reason_for_edit, ...updateData } = req.body;
+    
+    // Validate reason for edit
+    if (!reason_for_edit) {
+      next(new ErrorResponse('Reason for edit is required', 400));
+      return;
+    }
+
     // Find by function_id instead of _id
     let functionObj = await Function.findOne({
       function_id: req.params.id,
@@ -177,20 +188,41 @@ export const updateFunction = asyncHandler(
       return;
     }
 
+    // Store the original state for edit log
+    const beforeValue = sanitizeForEditLog(functionObj.toObject());
+
     // Do not allow updating the function_id itself
-    if (req.body.function_id) {
-      delete req.body.function_id;
+    if (updateData.function_id) {
+      delete updateData.function_id;
     }
 
     // Update function using its MongoDB _id
-    functionObj = await Function.findByIdAndUpdate(functionObj._id, req.body, {
+    functionObj = await Function.findByIdAndUpdate(functionObj._id, updateData, {
       new: true,
       runValidators: true
+    });
+
+    // Calculate which fields were changed
+    const changedFields = findChangedFields(beforeValue, sanitizeForEditLog(functionObj!.toObject()));
+
+    // Create edit log
+    await EditLog.create({
+      target_id: functionObj!._id,
+      target_type: 'Function',
+      action: 'update',
+      before_value: beforeValue,
+      after_value: sanitizeForEditLog(functionObj!.toObject()),
+      reason: reason_for_edit,
+      changed_fields: changedFields,
+      created_by: req.user?._id,
+      user_email: req.user?.email,
+      user_name: req.user?.username
     });
 
     // Invalidate cache
     await invalidateCacheByPattern('api:/functions*');
     await invalidateCacheByPattern(`api:/functions/${req.params.id}`);
+    await invalidateCacheByPattern('api:/edit-logs*');
 
     res.status(200).json({
       success: true,

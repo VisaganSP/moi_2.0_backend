@@ -5,6 +5,8 @@ import Payer from '../models/Payer.model';
 import { ErrorResponse } from '../utils/errorResponse';
 import { AuthenticatedRequest } from '../types';
 import { invalidateCacheByPattern } from '../utils/cacheUtils';
+import { findChangedFields, sanitizeForEditLog } from '../utils/editLogHelpers';
+import EditLog from '../models/Editlog.model';
 
 // @desc    Create a new payer
 // @route   POST /api/payers
@@ -157,6 +159,15 @@ export const updatePayer = asyncHandler(
         return;
       }
 
+      // Extract reason_for_edit from request body
+      const { reason_for_edit, ...updateData } = req.body;
+      
+      // Validate reason for edit
+      if (!reason_for_edit) {
+        next(new ErrorResponse('Reason for edit is required', 400));
+        return;
+      }
+
       // Find payer by MongoDB _id
       let payer = await Payer.findOne({
         _id: req.params.id,
@@ -168,30 +179,76 @@ export const updatePayer = asyncHandler(
         return;
       }
 
+      // Store the original state for edit log
+      const beforeValue = sanitizeForEditLog(payer.toObject());
+
       // Store function_id for cache invalidation
       const functionId = payer.function_id;
       
       // Don't allow function_id to be modified
-      if (req.body.function_id) {
-        delete req.body.function_id;
+      if (updateData.function_id) {
+        delete updateData.function_id;
       }
 
       // Update payer
-      payer = await Payer.findByIdAndUpdate(req.params.id, req.body, {
+      payer = await Payer.findByIdAndUpdate(req.params.id, updateData, {
         new: true,
         runValidators: true
       }).lean() as unknown as typeof payer;  // Use lean for better performance
 
-      // Invalidate cache
-      await invalidateCacheByPattern('api:/payers*');
-      await invalidateCacheByPattern(`api:/payers/${req.params.id}`);
-      await invalidateCacheByPattern(`api:/functions/${functionId}/payers*`);
+      // Calculate which fields were changed
+      const changedFields = findChangedFields(beforeValue, sanitizeForEditLog(payer));
 
-      console.log(`Updated payer with ID: ${req.params.id}`);
+      // Create edit log
+      await EditLog.create({
+        target_id: payer._id,
+        target_type: 'Payer',
+        action: 'update',
+        before_value: beforeValue,
+        after_value: sanitizeForEditLog(payer),
+        reason: reason_for_edit,
+        changed_fields: changedFields,
+        created_by: req.user._id,
+        user_email: req.user.email,
+        user_name: req.user.username
+      });
+
+      // More aggressive cache invalidation with better logging
+      console.log('Starting cache invalidation for updated payer...');
+      
+      // Clear all payer-related caches
+      await invalidateCacheByPattern('api:/payers*');
+      console.log('Invalidated general payers cache');
+      
+      // Clear specific payer cache (try both ObjectId and string formats)
+      await invalidateCacheByPattern(`api:/payers/${req.params.id}`);
+      await invalidateCacheByPattern(`api:/payers/${req.params.id.toString()}`);
+      console.log(`Invalidated cache for payer ID: ${req.params.id}`);
+      
+      // Clear function-payer relationship caches
+      await invalidateCacheByPattern(`api:/functions/${functionId}/payers*`);
+      await invalidateCacheByPattern(`api:/functions/${functionId.toString()}/payers*`);
+      console.log(`Invalidated cache for function-payers: ${functionId}`);
+      
+      // Clear edit logs cache
+      await invalidateCacheByPattern('api:/edit-logs*');
+      console.log('Invalidated edit logs cache');
+      
+      // Clear any specific cached routes that might contain this payer
+      await invalidateCacheByPattern(`api:/payers/phone/*`);
+      console.log('Invalidated phone-specific caches');
+      
+      // Force cache refresh by adding a timestamp to force a cache miss
+      const timestamp = Date.now();
+      await invalidateCacheByPattern(`api:/payers?_t=${timestamp}`);
+      console.log('Added timestamp to force cache refresh');
+
+      console.log(`Successfully updated payer with ID: ${req.params.id}`);
 
       res.status(200).json({
         success: true,
-        data: payer
+        data: payer,
+        _cache_cleared: true // Flag to indicate cache was cleared
       });
     } catch (error) {
       console.error('Error updating payer:', error);

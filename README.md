@@ -151,6 +151,13 @@ JWT_EXPIRE=30d
 - **Get Unique Payer Cities**: `GET /api/payers/unique/cities`
 - **Get Unique Payer Work Types**: `GET /api/payers/unique/works`
 
+### Edit Logs
+
+- **Get All Edit Logs**: `GET /api/edit-logs` (Admin only)
+- **Get Edit Log by ID**: `GET /api/edit-logs/:id` (Admin only)
+- **Get Edit Logs by Target**: `GET /api/edit-logs/:targetType/:targetId`
+- **Get Edit Logs by User**: `GET /api/edit-logs/user/:userId` (Admin only)
+
 ## Project Structure
 
 ```

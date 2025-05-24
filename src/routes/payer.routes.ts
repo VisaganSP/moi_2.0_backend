@@ -37,11 +37,14 @@ router.get('/unique/works', getUniquePayerWorks);
 // Standard CRUD routes
 router.route('/')
   .post(createPayer)
-  .get(cacheMiddleware(300), getPayers);
+  // .get(cacheMiddleware(300), getPayers);
+  .get(getPayers);
+
 
 // Parameterized routes
 router.route('/:id')
-  .get(cacheMiddleware(300), getPayerById)
+  .get(getPayerById)
+  // .get(cacheMiddleware(300), getPayerById)
   .put(updatePayer)
   .delete(deletePayer);
 

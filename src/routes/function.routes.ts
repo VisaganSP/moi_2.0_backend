@@ -26,16 +26,16 @@ router.use(protect);
 router.get('/deleted', admin, getDeletedFunctions);  // Admin only
 
 // Date range search available to all authenticated users - must come BEFORE /:id route
-router.get('/date-range', cacheMiddleware(300), getFunctionsByDateRange);  // All authenticated users
+router.get('/date-range', getFunctionsByDateRange);  // All authenticated users
 
 // Routes with Admin access only for create, update, delete operations
 router.route('/')
   .post(admin, createFunction)  // Admin only
-  .get(cacheMiddleware(300), getFunctions);  // All authenticated users
+  .get(getFunctions);  // All authenticated users
 
 // Parameterized routes AFTER specific routes
 router.route('/:id')
-  .get(cacheMiddleware(300), getFunctionById)  // All authenticated users
+  .get(getFunctionById)  // All authenticated users
   .put(admin, updateFunction)  // Admin only
   .delete(admin, deleteFunction);  // Admin only
 
@@ -47,7 +47,7 @@ router.delete('/:id/permanent', admin, permanentlyDeleteFunction);
 
 // Payer Specific Routes
 // These routes are parameterized by function ID
-router.get('/:functionId/payers', cacheMiddleware(300), getPayersByFunction);
-router.get('/:functionId/total-payment', cacheMiddleware(300), getTotalPaymentByFunction);
+router.get('/:functionId/payers', getPayersByFunction);
+router.get('/:functionId/total-payment', getTotalPaymentByFunction);
 
 export default router;

@@ -36,6 +36,11 @@ This document provides comprehensive information about the MOI Software Online A
   - [Get Unique Payer Relations](#get-unique-payer-relations)
   - [Get Unique Payer Cities](#get-unique-payer-cities)
   - [Get Unique Payer Work Types](#get-unique-payer-work-types)
+- [Edit Logs Endpoints](#edit-logs-endpoints)
+  - [Get All Edit Logs](#get-all-edit-logs)
+  - [Get Edit Log by ID](#get-edit-log-by-id)
+  - [Get Edit Logs by Target](#get-edit-logs-by-target)
+  - [Get Edit Logs by User](#get-edit-logs-by-user)
 - [MongoDB Express Access](#mongodb-express-access)
 
 ## Base URL
@@ -424,7 +429,8 @@ Updates a specific function by its ID. Admin only.
 ```json
 {
   "function_name": "Wedding Reception - Updated",
-  "function_amt_spent": 550000
+  "function_amt_spent": 550000,
+  "reason_for_edit": "Updated function name and increased budget allocation"
 }
 ```
 
@@ -436,7 +442,8 @@ curl -X PUT http://localhost:5001/api/functions/683246abcd1234567890 \
   -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
   -d '{
     "function_name": "Wedding Reception - Updated",
-    "function_amt_spent": 550000
+    "function_amt_spent": 550000,
+    "reason_for_edit": "Updated function name and increased budget allocation"
   }'
 ```
 
@@ -455,7 +462,7 @@ curl -X PUT http://localhost:5001/api/functions/683246abcd1234567890 \
 }
 ```
 
-**Error Response**:
+**Error Responses**:
 
 ```json
 {
@@ -463,6 +470,27 @@ curl -X PUT http://localhost:5001/api/functions/683246abcd1234567890 \
   "error": "Not authorized as an admin"
 }
 ```
+
+```json
+{
+  "success": false,
+  "error": "Reason for edit is required"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Function not found"
+}
+```
+
+**Notes**:
+
+- The `reason_for_edit` field is required and must explain why the function is being updated
+- All updates are logged in the edit history and can be viewed through the Edit Logs API
+- The `function_id` field cannot be modified with this endpoint
+- The cache is automatically invalidated after an update to ensure fresh data
 
 ### Delete Function
 
@@ -858,7 +886,8 @@ Updates a specific payer by its ID.
 ```json
 {
   "payer_amount": 30000,
-  "payer_cash_method": "Cash"
+  "payer_cash_method": "Cash",
+  "reason_for_edit": "Corrected payment amount and updated payment method"
 }
 ```
 
@@ -870,7 +899,8 @@ curl -X PUT http://localhost:5001/api/payers/683247efgh5678901234 \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{
     "payer_amount": 30000,
-    "payer_cash_method": "Cash"
+    "payer_cash_method": "Cash",
+    "reason_for_edit": "Corrected payment amount and updated payment method"
   }'
 ```
 
@@ -889,7 +919,7 @@ curl -X PUT http://localhost:5001/api/payers/683247efgh5678901234 \
 }
 ```
 
-**Error Response**:
+**Error Responses**:
 
 ```json
 {
@@ -897,6 +927,35 @@ curl -X PUT http://localhost:5001/api/payers/683247efgh5678901234 \
   "error": "Payer not found"
 }
 ```
+
+```json
+{
+  "success": false,
+  "error": "Reason for edit is required"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "User not found"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Invalid payer ID format"
+}
+```
+
+**Notes**:
+
+- The `reason_for_edit` field is now required and must explain why the payer information is being updated
+- All updates are logged in the edit history and can be viewed through the Edit Logs API
+- The `function_id` field cannot be modified with this endpoint
+- The cache is automatically invalidated after an update to ensure fresh data is displayed
+- Changes to payer information are tracked with before and after values in the edit logs
 
 ### Delete Payer
 
@@ -1368,6 +1427,318 @@ curl -X GET http://localhost:5001/api/payers/unique/works \
 {
   "success": false,
   "error": "Error fetching unique payer work types"
+}
+```
+
+## Edit Logs Endpoints
+
+### Get All Edit Logs
+
+Retrieves a list of all edit logs with pagination and filtering options. Admin only.
+
+- **URL**: `/edit-logs`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token with Admin privileges)
+- **Cache**: 5 minutes (300 seconds)
+
+**Query Parameters**:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `target_id` | String | Filter by target ID |
+| `target_type` | String | Filter by target type (`Function` or `Payer`) |
+| `action` | String | Filter by action type (`update`) |
+| `created_by` | String | Filter by user ID who made the change |
+| `user_email` | String | Filter by user email |
+| `startDate` | Date | Filter by date range start (ISO format) |
+| `endDate` | Date | Filter by date range end (ISO format) |
+| `page` | Number | Page number (default: 1) |
+| `limit` | Number | Results per page (default: 10) |
+
+**Example Request**:
+
+```bash
+curl -X GET "http://localhost:5001/api/edit-logs?target_type=Function&action=update&page=1&limit=10" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "count": 2,
+  "pagination": {
+    "current": 1,
+    "pages": 1,
+    "total": 2
+  },
+  "data": [
+    {
+      "_id": "683247efgh5678901234",
+      "target_id": "683246abcd1234567890",
+      "target_type": "Function",
+      "action": "update",
+      "before_value": {
+        "function_name": "Wedding Reception",
+        "function_amt_spent": 500000
+      },
+      "after_value": {
+        "function_name": "Wedding Reception - Updated",
+        "function_amt_spent": 550000
+      },
+      "reason": "Updated function name and increased budget allocation",
+      "changed_fields": ["function_name", "function_amt_spent"],
+      "created_by": {
+        "_id": "682235dbf95499dd50469312",
+        "username": "adminuser",
+        "email": "admin@example.com"
+      },
+      "user_email": "admin@example.com",
+      "user_name": "Admin User",
+      "created_at": "2025-05-12T13:00:00.000Z"
+    },
+    {
+      "_id": "683247efgh5678901235",
+      "target_id": "683247efgh5678901234",
+      "target_type": "Payer",
+      "action": "update",
+      "before_value": {
+        "payer_name": "Rahul Kumar",
+        "payer_amount": 25000,
+        "payer_cash_method": "Bank Transfer"
+      },
+      "after_value": {
+        "payer_name": "Rahul Kumar",
+        "payer_amount": 30000,
+        "payer_cash_method": "Cash"
+      },
+      "reason": "Corrected payment amount and updated payment method",
+      "changed_fields": ["payer_amount", "payer_cash_method"],
+      "created_by": {
+        "_id": "682235dbf95499dd50469312",
+        "username": "adminuser",
+        "email": "admin@example.com"
+      },
+      "user_email": "admin@example.com",
+      "user_name": "Admin User",
+      "created_at": "2025-05-12T14:00:00.000Z"
+    }
+  ]
+}
+```
+
+### Get Edit Log by ID
+
+Retrieves a specific edit log by its ID. Admin only.
+
+- **URL**: `/edit-logs/:id`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token with Admin privileges)
+- **Cache**: 5 minutes (300 seconds)
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/edit-logs/683247efgh5678901234 \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "683247efgh5678901234",
+    "target_id": "683246abcd1234567890",
+    "target_type": "Function",
+    "action": "update",
+    "before_value": {
+      "function_name": "Wedding Reception",
+      "function_amt_spent": 500000
+    },
+    "after_value": {
+      "function_name": "Wedding Reception - Updated",
+      "function_amt_spent": 550000
+    },
+    "reason": "Updated function name and increased budget allocation",
+    "changed_fields": ["function_name", "function_amt_spent"],
+    "created_by": {
+      "_id": "682235dbf95499dd50469312",
+      "username": "adminuser",
+      "email": "admin@example.com"
+    },
+    "user_email": "admin@example.com",
+    "user_name": "Admin User",
+    "created_at": "2025-05-12T13:00:00.000Z"
+  }
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Edit log not found with id of 683247efgh5678901234"
+}
+```
+
+### Get Edit Logs by Target
+
+Retrieves edit logs for a specific Function or Payer.
+
+- **URL**: `/edit-logs/:targetType/:targetId`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token)
+- **Cache**: 5 minutes (300 seconds)
+
+**URL Parameters**:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `targetType` | String | Type of target (`Function` or `Payer`) |
+| `targetId` | String | ID of the target |
+
+**Query Parameters**:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `page` | Number | Page number (default: 1) |
+| `limit` | Number | Results per page (default: 10) |
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/edit-logs/Function/683246abcd1234567890 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "count": 1,
+  "pagination": {
+    "current": 1,
+    "pages": 1,
+    "total": 1
+  },
+  "data": [
+    {
+      "_id": "683247efgh5678901234",
+      "target_id": "683246abcd1234567890",
+      "target_type": "Function",
+      "action": "update",
+      "before_value": {
+        "function_name": "Wedding Reception",
+        "function_amt_spent": 500000
+      },
+      "after_value": {
+        "function_name": "Wedding Reception - Updated",
+        "function_amt_spent": 550000
+      },
+      "reason": "Updated function name and increased budget allocation",
+      "changed_fields": ["function_name", "function_amt_spent"],
+      "created_by": {
+        "_id": "682235dbf95499dd50469312",
+        "username": "adminuser",
+        "email": "admin@example.com"
+      },
+      "user_email": "admin@example.com",
+      "user_name": "Admin User",
+      "created_at": "2025-05-12T13:00:00.000Z"
+    }
+  ]
+}
+```
+
+### Get Edit Logs by User
+
+Retrieves edit logs created by a specific user. Admin only.
+
+- **URL**: `/edit-logs/user/:userId`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token with Admin privileges)
+- **Cache**: 5 minutes (300 seconds)
+
+**URL Parameters**:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `userId` | String | ID of the user |
+
+**Query Parameters**:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `page` | Number | Page number (default: 1) |
+| `limit` | Number | Results per page (default: 10) |
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/edit-logs/user/682235dbf95499dd50469312 \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "count": 2,
+  "pagination": {
+    "current": 1,
+    "pages": 1,
+    "total": 2
+  },
+  "data": [
+    {
+      "_id": "683247efgh5678901234",
+      "target_id": "683246abcd1234567890",
+      "target_type": "Function",
+      "action": "update",
+      "before_value": {
+        "function_name": "Wedding Reception",
+        "function_amt_spent": 500000
+      },
+      "after_value": {
+        "function_name": "Wedding Reception - Updated",
+        "function_amt_spent": 550000
+      },
+      "reason": "Updated function name and increased budget allocation",
+      "changed_fields": ["function_name", "function_amt_spent"],
+      "created_by": "682235dbf95499dd50469312",
+      "user_email": "admin@example.com",
+      "user_name": "Admin User",
+      "created_at": "2025-05-12T13:00:00.000Z"
+    },
+    {
+      "_id": "683247efgh5678901235",
+      "target_id": "683247efgh5678901234",
+      "target_type": "Payer",
+      "action": "update",
+      "before_value": {
+        "payer_name": "Rahul Kumar",
+        "payer_amount": 25000,
+        "payer_cash_method": "Bank Transfer"
+      },
+      "after_value": {
+        "payer_name": "Rahul Kumar",
+        "payer_amount": 30000,
+        "payer_cash_method": "Cash"
+      },
+      "reason": "Corrected payment amount and updated payment method",
+      "changed_fields": ["payer_amount", "payer_cash_method"],
+      "created_by": "682235dbf95499dd50469312",
+      "user_email": "admin@example.com",
+      "user_name": "Admin User",
+      "created_at": "2025-05-12T14:00:00.000Z"
+    }
+  ]
 }
 ```
 

@@ -21,7 +21,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"username\": \"visagan\",\n    \"email\": \"visagan@example.com\",\n    \"password\": \"12345678\"\n  }",
+							"raw": "{\n    \"username\": \"john\",\n    \"email\": \"john@example.com\",\n    \"password\": \"12345678\"\n  }",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -56,7 +56,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"johndoe@example.com\",\n    \"password\": \"12345678\"\n  }",
+							"raw": "{\n    \"email\": \"tamiluser@example.com\",\n    \"password\": \"password123\"\n  }",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -290,11 +290,11 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q"
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
 							}
 						],
 						"url": {
-							"raw": "http://localhost:5001/api/functions/wedding_reception-john_doe-chennai-2025-06-15-11:00_am",
+							"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -303,7 +303,7 @@
 							"path": [
 								"api",
 								"functions",
-								"wedding_reception-john_doe-chennai-2025-06-15-11:00_am"
+								"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am"
 							]
 						}
 					},
@@ -320,12 +320,12 @@
 							},
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q"
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZTM3NWQzZTAwODNkMzczYjA3NiIsImlhdCI6MTc0ODEwNTUxMCwiZXhwIjoxNzUwNjk3NTEwfQ.4fG1M306QUOPo7-nElXWaU9VHpiduK1wHj59M2Cps30"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"function_name\": \"Wedding Reception - Updated\",\n    \"function_amt_spent\": 550000,\n    \"function_bill_details\": {\n      \"owner_name\": \"John Doe Updated\",\n      \"owner_occupation\": \"Senior Software Engineer\"\n    }\n}",
+							"raw": "{\n    \"function_amt_spent\": 560000,\n    \"function_held_place\": \"Golden Palace Premium\",\n    \"reason_for_edit\": \"Updated venue to premium hall and adjusted budget accordingly\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -333,7 +333,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:5001/api/functions/wedding_reception-john_doe-chennai-2025-06-15-11:00_am",
+							"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -342,7 +342,7 @@
 							"path": [
 								"api",
 								"functions",
-								"wedding_reception-john_doe-chennai-2025-06-15-11:00_am"
+								"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am"
 							]
 						}
 					},
@@ -716,11 +716,11 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZjRhNWY2MWI0NDFiODZjMmEwZSIsImlhdCI6MTc0NzgzMjY1MCwiZXhwIjoxNzUwNDI0NjUwfQ.kKL0VSpOA0hQZI48qwghw-KfNqF4VitXP8CjN7Qc-kA"
 							}
 						],
 						"url": {
-							"raw": "http://localhost:5001/api/payers?function_id=wedding_reception-john_doe-chennai-2025-06-15-11:00_am&page=1&limit=10",
+							"raw": "http://localhost:5001/api/payers?function_id=திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am&page=11&limit=10",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -733,11 +733,11 @@
 							"query": [
 								{
 									"key": "function_id",
-									"value": "wedding_reception-john_doe-chennai-2025-06-15-11:00_am"
+									"value": "திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am"
 								},
 								{
 									"key": "page",
-									"value": "1"
+									"value": "11"
 								},
 								{
 									"key": "limit",
@@ -755,11 +755,11 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
 							}
 						],
 						"url": {
-							"raw": "http://localhost:5001/api/payers/6824cbfaf14718f3a719678e",
+							"raw": "http://localhost:5001/api/payers/682dd2b3a2e63194ea9f3199",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -768,7 +768,7 @@
 							"path": [
 								"api",
 								"payers",
-								"6824cbfaf14718f3a719678e"
+								"682dd2b3a2e63194ea9f3199"
 							]
 						}
 					},
@@ -785,12 +785,12 @@
 							},
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"payer_amount\": 30000,\n    \"payer_cash_method\": \"Phonepe\"\n  }",
+							"raw": "{\n    \"payer_amount\": 37000,\n    \"payer_cash_method\": \"Cash\",\n    \"reason_for_edit\": \"Updated Cash and amount\"\n  }",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -798,7 +798,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:5001/api/payers/6824cbfaf14718f3a719678e",
+							"raw": "http://localhost:5001/api/payers/682dd2b3a2e63194ea9f3199",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -807,7 +807,7 @@
 							"path": [
 								"api",
 								"payers",
-								"6824cbfaf14718f3a719678e"
+								"682dd2b3a2e63194ea9f3199"
 							]
 						}
 					},
@@ -963,11 +963,11 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZjRhNWY2MWI0NDFiODZjMmEwZSIsImlhdCI6MTc0NzgzMjY1MCwiZXhwIjoxNzUwNDI0NjUwfQ.kKL0VSpOA0hQZI48qwghw-KfNqF4VitXP8CjN7Qc-kA"
 							}
 						],
 						"url": {
-							"raw": "http://localhost:5001/api/functions/wedding_reception-john_doe-chennai-2025-06-15-11:00_am/total-payment",
+							"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/total-payment",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -976,7 +976,7 @@
 							"path": [
 								"api",
 								"functions",
-								"wedding_reception-john_doe-chennai-2025-06-15-11:00_am",
+								"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
 								"total-payment"
 							]
 						}
@@ -1005,6 +1005,126 @@
 								"payers",
 								"phone",
 								"9876543212"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "EditLogs Endpoints",
+			"item": [
+				{
+					"name": "GetAllEditLogs",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/edit-logs?page=1&limit=10",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"edit-logs"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetEditLogsByID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/edit-logs/6831f12cb5a18b7ab86e63e8",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"edit-logs",
+								"6831f12cb5a18b7ab86e63e8"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetEditLogsByTarget",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/edit-logs/Payer/682dd2b3a2e63194ea9f3199",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"edit-logs",
+								"Payer",
+								"682dd2b3a2e63194ea9f3199"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetEditLogsByUserID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/edit-logs/user/682dce375d3e0083d373b076",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"edit-logs",
+								"user",
+								"682dce375d3e0083d373b076"
 							]
 						}
 					},
