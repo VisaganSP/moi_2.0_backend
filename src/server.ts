@@ -13,6 +13,7 @@ dotenv.config();
 import authRoutes from './routes/auth.routes';
 import functionRoutes from './routes/function.routes';
 import payerRoutes from './routes/payer.routes';
+import editLogRoutes from './routes/editLog.routes';
 
 // Import DB and Redis connections
 import connectDB from './config/db';
@@ -46,6 +47,7 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/api/auth', authRoutes);
 app.use('/api/functions', functionRoutes);
 app.use('/api/payers', payerRoutes);
+app.use('/api/edit-logs', editLogRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {

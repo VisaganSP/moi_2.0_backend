@@ -83,3 +83,18 @@ export interface PayerProfileDocument extends Document {
   }>;
   last_updated: Date;
 }
+
+// Add EditLog document interface
+export interface EditLogDocument extends Document {
+  target_id: Types.ObjectId;
+  target_type: 'Function' | 'Payer';
+  action: 'update' | 'delete' | 'restore';
+  before_value: any;
+  after_value: any;
+  reason: string;
+  changed_fields: string[];
+  created_by: Types.ObjectId;
+  user_email: string;
+  user_name: string;
+  created_at: Date;
+}
