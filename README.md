@@ -151,6 +151,15 @@ JWT_EXPIRE=30d
 - **Get Unique Payer Cities**: `GET /api/payers/unique/cities`
 - **Get Unique Payer Work Types**: `GET /api/payers/unique/works`
 
+### Visualization
+
+- **Get Payment Method Distribution**: `GET /api/functions/:functionId/payment-methods`
+- **Get Relation Distribution**: `GET /api/functions/:functionId/relation-distribution`
+- **Get City Distribution**: `GET /api/functions/:functionId/city-distribution`
+- **Get Amount Distribution**: `GET /api/functions/:functionId/amount-distribution`
+- **Get Cash vs Gift Comparison**: `GET /api/functions/:functionId/cash-vs-gifts`
+- **Get Top Contributors**: `GET /api/functions/:functionId/top-contributors`
+
 ### Edit Logs
 
 - **Get All Edit Logs**: `GET /api/edit-logs` (Admin only)
