@@ -14,6 +14,16 @@ import { getPayersByFunction, getTotalPaymentByFunction } from '../controllers/p
 import { protect, admin } from '../middleware/auth.middleware';
 import { cacheMiddleware } from '../middleware/cache.middleware';
 
+// Import visualization controllers
+import {
+  getPaymentMethodDistribution,
+  getRelationDistribution,
+  getCityDistribution,
+  getAmountDistribution,
+  getCashVsGifts,
+  getTopContributors
+} from '../controllers/visualization.controller';
+
 const router = express.Router();
 
 // All routes require authentication
@@ -49,5 +59,13 @@ router.delete('/:id/permanent', admin, permanentlyDeleteFunction);
 // These routes are parameterized by function ID
 router.get('/:functionId/payers', getPayersByFunction);
 router.get('/:functionId/total-payment', getTotalPaymentByFunction);
+
+// ===== Visualization Routes =====
+router.get('/:functionId/payment-methods', getPaymentMethodDistribution);
+router.get('/:functionId/relation-distribution', getRelationDistribution);
+router.get('/:functionId/city-distribution', getCityDistribution);
+router.get('/:functionId/amount-distribution', getAmountDistribution);
+router.get('/:functionId/cash-vs-gifts', getCashVsGifts);
+router.get('/:functionId/top-contributors', getTopContributors);
 
 export default router;

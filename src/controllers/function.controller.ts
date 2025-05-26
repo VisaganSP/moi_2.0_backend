@@ -5,7 +5,7 @@ import { ErrorResponse } from '../utils/errorResponse';
 import { AuthenticatedRequest } from '../types';
 import { invalidateCacheByPattern } from '../utils/cacheUtils';
 import { findChangedFields, sanitizeForEditLog } from '../utils/editLogHelpers';
-import EditLog from '../models/Editlog.model';
+import EditLog from '../models/EditLog.model';
 
 // @desc    Create a new function (Admin only)
 // @route   POST /api/functions

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import asyncHandler from 'express-async-handler';
-import EditLog from '../models/Editlog.model';
+import EditLog from '../models/EditLog.model';
 import { ErrorResponse } from '../utils/errorResponse';
 import { AuthenticatedRequest } from '../types';
 import { invalidateCacheByPattern } from '../utils/cacheUtils';

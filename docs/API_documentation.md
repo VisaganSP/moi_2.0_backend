@@ -36,6 +36,13 @@ This document provides comprehensive information about the MOI Software Online A
   - [Get Unique Payer Relations](#get-unique-payer-relations)
   - [Get Unique Payer Cities](#get-unique-payer-cities)
   - [Get Unique Payer Work Types](#get-unique-payer-work-types)
+- [Visualization Endpoints](#visualization-endpoints)
+  - [Get Payment Method Distribution](#get-payment-method-distribution)
+  - [Get Relation Distribution](#get-relation-distribution)
+  - [Get City Distribution](#get-city-distribution)
+  - [Get Amount Distribution](#get-amount-distribution)
+  - [Get Cash vs Gift Comparison](#get-cash-vs-gift-comparison)
+  - [Get Top Contributors](#get-top-contributors)
 - [Edit Logs Endpoints](#edit-logs-endpoints)
   - [Get All Edit Logs](#get-all-edit-logs)
   - [Get Edit Log by ID](#get-edit-log-by-id)
@@ -1741,6 +1748,404 @@ curl -X GET http://localhost:5001/api/edit-logs/user/682235dbf95499dd50469312 \
   ]
 }
 ```
+
+## Visualization Endpoints
+
+This section provides comprehensive information about the MOI Software Online API endpoints for data visualization.
+
+### Get Payment Method Distribution
+
+Returns the count and total amount of payers grouped by payment method for a specific function.
+
+- **URL**: `/api/functions/:functionId/payment-methods`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token)
+- **Cache**: 5 minutes (300 seconds)
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/functions/wedding-reception-john_doe-chennai-2025-06-15-10_00_am/payment-methods \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "payment_method": "Cash",
+      "count": 15,
+      "total_amount": 150000
+    },
+    {
+      "payment_method": "GPay",
+      "count": 12,
+      "total_amount": 120000
+    },
+    {
+      "payment_method": "Bank Transfer",
+      "count": 8,
+      "total_amount": 240000
+    },
+    {
+      "payment_method": "Check",
+      "count": 3,
+      "total_amount": 90000
+    }
+  ]
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Function not found with id of wedding-reception-john_doe-chennai-2025-06-15-10_00_am"
+}
+```
+
+### Get Relation Distribution
+
+Returns contribution data grouped by payer relation for a specific function.
+
+- **URL**: `/api/functions/:functionId/relation-distribution`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token)
+- **Cache**: 5 minutes (300 seconds)
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/functions/wedding-reception-john_doe-chennai-2025-06-15-10_00_am/relation-distribution \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "relation": "Family",
+      "count": 20,
+      "total_amount": 300000,
+      "average_amount": 15000
+    },
+    {
+      "relation": "Friend",
+      "count": 25,
+      "total_amount": 250000,
+      "average_amount": 10000
+    },
+    {
+      "relation": "Colleague",
+      "count": 15,
+      "total_amount": 120000,
+      "average_amount": 8000
+    },
+    {
+      "relation": "Neighbor",
+      "count": 8,
+      "total_amount": 40000,
+      "average_amount": 5000
+    }
+  ]
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Function not found with id of wedding-reception-john_doe-chennai-2025-06-15-10_00_am"
+}
+```
+
+### Get City Distribution
+
+Returns geographical distribution of contributions for a specific function.
+
+- **URL**: `/api/functions/:functionId/city-distribution`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token)
+- **Cache**: 5 minutes (300 seconds)
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/functions/wedding-reception-john_doe-chennai-2025-06-15-10_00_am/city-distribution \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "city": "Chennai",
+      "count": 25,
+      "total_amount": 300000
+    },
+    {
+      "city": "Bangalore",
+      "count": 18,
+      "total_amount": 200000
+    },
+    {
+      "city": "Mumbai",
+      "count": 12,
+      "total_amount": 150000
+    },
+    {
+      "city": "Delhi",
+      "count": 8,
+      "total_amount": 100000
+    }
+  ]
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Function not found with id of wedding-reception-john_doe-chennai-2025-06-15-10_00_am"
+}
+```
+
+### Get Amount Distribution
+
+Returns categorized contributions by amount ranges for a specific function.
+
+- **URL**: `/api/functions/:functionId/amount-distribution`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token)
+- **Cache**: 5 minutes (300 seconds)
+- **Query Parameters**:
+  - `ranges`: Optional custom ranges (e.g., `0-5000,5001-10000,10001-25000,25001+`)
+
+**Example Request**:
+
+```bash
+# Default ranges
+curl -X GET http://localhost:5001/api/functions/wedding-reception-john_doe-chennai-2025-06-15-10_00_am/amount-distribution \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Custom ranges
+curl -X GET "http://localhost:5001/api/functions/wedding-reception-john_doe-chennai-2025-06-15-10_00_am/amount-distribution?ranges=0-1000,1001-5000,5001-10000,10001+" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "range": "0-5000",
+      "count": 15,
+      "total_amount": 45000
+    },
+    {
+      "range": "5001-10000",
+      "count": 25,
+      "total_amount": 200000
+    },
+    {
+      "range": "10001-25000",
+      "count": 18,
+      "total_amount": 300000
+    },
+    {
+      "range": "25001+",
+      "count": 10,
+      "total_amount": 450000
+    }
+  ]
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Function not found with id of wedding-reception-john_doe-chennai-2025-06-15-10_00_am"
+}
+```
+
+### Get Cash vs Gift Comparison
+
+Returns a comparison between cash contributions and gift contributions for a specific function.
+
+- **URL**: `/api/functions/:functionId/cash-vs-gifts`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token)
+- **Cache**: 5 minutes (300 seconds)
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/functions/wedding-reception-john_doe-chennai-2025-06-15-10_00_am/cash-vs-gifts \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "cash": {
+      "count": 50,
+      "total_amount": 750000
+    },
+    "gifts": {
+      "count": 20,
+      "gift_types": [
+        {
+          "gift_name": "Silver Plate",
+          "count": 8
+        },
+        {
+          "gift_name": "Gold Bracelet",
+          "count": 5
+        },
+        {
+          "gift_name": "Crystal Vase",
+          "count": 4
+        },
+        {
+          "gift_name": "Other Gifts",
+          "count": 3
+        }
+      ]
+    }
+  }
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Function not found with id of wedding-reception-john_doe-chennai-2025-06-15-10_00_am"
+}
+```
+
+### Get Top Contributors
+
+Returns the top N contributors for a specific function.
+
+- **URL**: `/api/functions/:functionId/top-contributors`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token)
+- **Cache**: 5 minutes (300 seconds)
+- **Query Parameters**:
+  - `limit`: Number of top contributors to return (default: 10)
+
+**Example Request**:
+
+```bash
+# Default limit (10)
+curl -X GET http://localhost:5001/api/functions/wedding-reception-john_doe-chennai-2025-06-15-10_00_am/top-contributors \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Custom limit
+curl -X GET "http://localhost:5001/api/functions/wedding-reception-john_doe-chennai-2025-06-15-10_00_am/top-contributors?limit=5" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "683247efgh5678901234",
+      "payer_name": "Suresh Rajan",
+      "payer_relation": "Family",
+      "payer_city": "Chennai",
+      "payer_amount": 100000,
+      "payer_given_object": "Cash"
+    },
+    {
+      "_id": "683247efgh5678901235",
+      "payer_name": "Priya Malhotra",
+      "payer_relation": "Family",
+      "payer_city": "Mumbai",
+      "payer_amount": 75000,
+      "payer_given_object": "Cash"
+    },
+    {
+      "_id": "683247efgh5678901236",
+      "payer_name": "Rajesh Kumar",
+      "payer_relation": "Friend",
+      "payer_city": "Chennai",
+      "payer_amount": 50000,
+      "payer_given_object": "Cash"
+    }
+    // ... more contributors based on limit
+  ]
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Function not found with id of wedding-reception-john_doe-chennai-2025-06-15-10_00_am"
+}
+```
+
+### Data Visualization Usage
+
+These endpoints are designed to provide data for charts and visualizations in the frontend application. Here are some recommended chart types for each endpoint:
+
+#### Payment Method Distribution
+- **Chart Type**: Pie chart or Donut chart
+- **Visualization**: Show the proportion of different payment methods
+- **Key Metrics**: Count and total amount for each payment method
+
+#### Relation Distribution
+- **Chart Type**: Bar chart
+- **Visualization**: Compare contributions across different relation types
+- **Key Metrics**: Count, total amount, and average amount per relation
+
+#### City Distribution
+- **Chart Type**: Map visualization or horizontal bar chart
+- **Visualization**: Geographic distribution of contributions
+- **Key Metrics**: Count and total amount per city
+
+#### Amount Distribution
+- **Chart Type**: Histogram or stacked bar chart
+- **Visualization**: Distribution of contributions across amount ranges
+- **Key Metrics**: Count and total amount per range
+
+#### Cash vs Gift Comparison
+- **Chart Type**: Pie chart with nested details
+- **Visualization**: Compare cash vs. gift contributions
+- **Key Metrics**: Count of cash/gift contributions, breakdown of gift types
+
+#### Top Contributors
+- **Chart Type**: Horizontal bar chart
+- **Visualization**: Ranking of top contributors
+- **Key Metrics**: Contribution amounts by contributor
+
+These endpoints enable rich dashboards and reports for analyzing contribution patterns in functions (events), helping event organizers understand their financial support distribution.
 
 ## MongoDB Express Access
 
