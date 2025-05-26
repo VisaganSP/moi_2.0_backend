@@ -246,6 +246,185 @@
 					]
 				},
 				{
+					"name": "Visualization Endpoints",
+					"item": [
+						{
+							"name": "GetPaymentMethodDistribution",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/payment-methods",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+										"payment-methods"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetRelationDistribution",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/relation-distribution",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+										"relation-distribution"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetCityDistribution",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/city-distribution",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+										"city-distribution"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetAmountDistribution",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/amount-distribution?ranges=0-1000,1001-5000,5001-10000,10001+",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+										"amount-distribution"
+									],
+									"query": [
+										{
+											"key": "ranges",
+											"value": "0-1000,1001-5000,5001-10000,10001+"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetCashVsGifts",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/cash-vs-gifts",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+										"cash-vs-gifts"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetTopContributors",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/top-contributors?limit=5",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+										"top-contributors"
+									],
+									"query": [
+										{
+											"key": "limit",
+											"value": "5"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
 					"name": "CreateFunction",
 					"request": {
 						"method": "POST",
@@ -720,7 +899,7 @@
 							}
 						],
 						"url": {
-							"raw": "http://localhost:5001/api/payers?function_id=திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am&page=11&limit=10",
+							"raw": "http://localhost:5001/api/payers?function_id=திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am&page=1&limit=100",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -737,11 +916,11 @@
 								},
 								{
 									"key": "page",
-									"value": "11"
+									"value": "1"
 								},
 								{
 									"key": "limit",
-									"value": "10"
+									"value": "100"
 								}
 							]
 						}
