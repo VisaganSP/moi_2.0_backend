@@ -124,13 +124,14 @@ JWT_EXPIRE=30d
 
 - **Create Function**: `POST /api/functions`
 - **Get Functions**: `GET /api/functions`
-- **Get Function**: `GET /api/functions/:id`
-- **Update Function**: `PUT /api/functions/:id`
-- **Delete Function**: `DELETE /api/functions/:id`
+- **Get Function**: `GET /api/functions/:functionId`
+- **Update Function**: `PUT /api/functions/:functionId`
+- **Delete Function**: `DELETE /api/functions/:functionId`
 - **Get Deleted Functions**: `GET /api/functions/deleted`
-- **Restore Function**: `PUT /api/functions/:id/restore`
+- **Restore Function**: `PUT /api/functions/:functionId/restore`
 - **Get Functions by Date Range**: `GET /api/functions/date-range`
-- **Permanently Delete Function**: `DELETE /api/functions/:id/permanent`
+- **Permanently Delete Function**: `DELETE /api/functions/:functionId/permanent`
+- **Get Function Denominations**: `GET /api/functions/:functionId/denominations`
 
 ### Payers
 
