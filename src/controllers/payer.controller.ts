@@ -31,12 +31,63 @@ export const createPayer = asyncHandler(
       }
     }
 
+    // Handle denomination calculations for cash payments
+    if (req.body.payer_given_object === 'Cash') {
+      try {
+        // Calculate total received
+        const denomsReceived = req.body.denominations_received || {};
+        const totalReceived = 
+          (denomsReceived['2000'] || 0) * 2000 +
+          (denomsReceived['500'] || 0) * 500 +
+          (denomsReceived['200'] || 0) * 200 +
+          (denomsReceived['100'] || 0) * 100 +
+          (denomsReceived['50'] || 0) * 50 +
+          (denomsReceived['20'] || 0) * 20 +
+          (denomsReceived['10'] || 0) * 10 +
+          (denomsReceived['5'] || 0) * 5 +
+          (denomsReceived['2'] || 0) * 2 +
+          (denomsReceived['1'] || 0) * 1;
+        
+        // Calculate total returned
+        const denomsReturned = req.body.denominations_returned || {};
+        const totalReturned = 
+          (denomsReturned['2000'] || 0) * 2000 +
+          (denomsReturned['500'] || 0) * 500 +
+          (denomsReturned['200'] || 0) * 200 +
+          (denomsReturned['100'] || 0) * 100 +
+          (denomsReturned['50'] || 0) * 50 +
+          (denomsReturned['20'] || 0) * 20 +
+          (denomsReturned['10'] || 0) * 10 +
+          (denomsReturned['5'] || 0) * 5 +
+          (denomsReturned['2'] || 0) * 2 +
+          (denomsReturned['1'] || 0) * 1;
+        
+        // Set the calculated values
+        req.body.total_received = totalReceived;
+        req.body.total_returned = totalReturned;
+        req.body.net_amount = totalReceived - totalReturned;
+        
+        // Validate that net_amount matches payer_amount if payer_amount is provided
+        if (req.body.payer_amount !== undefined && 
+            req.body.payer_amount !== null && 
+            req.body.net_amount !== req.body.payer_amount) {
+          next(new ErrorResponse('Net amount from denominations does not match payer amount', 400));
+          return;
+        }
+      } catch (error) {
+        console.error('Error calculating denomination totals:', error);
+        next(new ErrorResponse('Error processing denomination data', 400));
+        return;
+      }
+    }
+
     // Create payer
     const payer = await Payer.create(req.body);
 
     // Invalidate cache
     await invalidateCacheByPattern('api:/payers*');
     await invalidateCacheByPattern(`api:/functions/${req.body.function_id}/payers*`);
+    await invalidateCacheByPattern(`api:/functions/${req.body.function_id}/denominations*`);
 
     res.status(201).json({
       success: true,
@@ -190,6 +241,59 @@ export const updatePayer = asyncHandler(
         delete updateData.function_id;
       }
 
+      // Handle denomination calculations for cash payments
+      if (payer.payer_given_object === 'Cash' && 
+          (updateData.denominations_received || updateData.denominations_returned)) {
+        try {
+          const denomsReceived = updateData.denominations_received || payer.denominations_received || {};
+          const totalReceived = 
+            (denomsReceived['2000'] || 0) * 2000 +
+            (denomsReceived['500'] || 0) * 500 +
+            (denomsReceived['200'] || 0) * 200 +
+            (denomsReceived['100'] || 0) * 100 +
+            (denomsReceived['50'] || 0) * 50 +
+            (denomsReceived['20'] || 0) * 20 +
+            (denomsReceived['10'] || 0) * 10 +
+            (denomsReceived['5'] || 0) * 5 +
+            (denomsReceived['2'] || 0) * 2 +
+            (denomsReceived['1'] || 0) * 1;
+          
+          const denomsReturned = updateData.denominations_returned || payer.denominations_returned || {};
+          const totalReturned = 
+            (denomsReturned['2000'] || 0) * 2000 +
+            (denomsReturned['500'] || 0) * 500 +
+            (denomsReturned['200'] || 0) * 200 +
+            (denomsReturned['100'] || 0) * 100 +
+            (denomsReturned['50'] || 0) * 50 +
+            (denomsReturned['20'] || 0) * 20 +
+            (denomsReturned['10'] || 0) * 10 +
+            (denomsReturned['5'] || 0) * 5 +
+            (denomsReturned['2'] || 0) * 2 +
+            (denomsReturned['1'] || 0) * 1;
+          
+          // Set the calculated values
+          updateData.total_received = totalReceived;
+          updateData.total_returned = totalReturned;
+          updateData.net_amount = totalReceived - totalReturned;
+          
+          // Validate that net_amount matches payer_amount if payer_amount is being updated
+          const newAmount = updateData.payer_amount !== undefined ? 
+                            updateData.payer_amount : 
+                            payer.payer_amount;
+                            
+          if (newAmount !== undefined && 
+              newAmount !== null && 
+              updateData.net_amount !== newAmount) {
+            next(new ErrorResponse('Net amount from denominations does not match payer amount', 400));
+            return;
+          }
+        } catch (error) {
+          console.error('Error calculating denomination totals during update:', error);
+          next(new ErrorResponse('Error processing denomination data', 400));
+          return;
+        }
+      }
+
       // Update payer
       payer = await Payer.findByIdAndUpdate(req.params.id, updateData, {
         new: true,
@@ -228,6 +332,7 @@ export const updatePayer = asyncHandler(
       // Clear function-payer relationship caches
       await invalidateCacheByPattern(`api:/functions/${functionId}/payers*`);
       await invalidateCacheByPattern(`api:/functions/${functionId.toString()}/payers*`);
+      await invalidateCacheByPattern(`api:/functions/${functionId}/denominations*`);
       console.log(`Invalidated cache for function-payers: ${functionId}`);
       
       // Clear edit logs cache

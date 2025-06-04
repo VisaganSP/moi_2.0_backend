@@ -47,6 +47,19 @@ export interface FunctionDocument extends Document {
   updated_at: Date;
 }
 
+export interface DenominationCounts {
+  "2000"?: number;
+  "500"?: number;
+  "200"?: number;
+  "100"?: number;
+  "50"?: number;
+  "20"?: number;
+  "10"?: number;
+  "5"?: number;
+  "2"?: number;
+  "1"?: number;
+}
+
 export interface PayerDocument extends Document {
   function_id: string;
   function_name: string;
@@ -62,6 +75,12 @@ export interface PayerDocument extends Document {
   payer_address: string;
   current_date: Date;
   current_time: string;
+  // Denominations received and returned
+  denominations_received: DenominationCounts;
+  total_received: number;
+  denominations_returned: DenominationCounts;
+  total_returned: number;
+  net_amount: number;
   created_by: Types.ObjectId;
   is_deleted: boolean;
   deleted_at?: Date;

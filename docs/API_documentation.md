@@ -19,6 +19,7 @@ This document provides comprehensive information about the MOI Software Online A
   - [Restore Function](#restore-function)
   - [Get Functions by Date Range](#get-functions-by-date-range)
   - [Delete Function Permanently](#permanently-delete-function)
+  - [Get Function Denominations](#get-function-denominations)
 - [Payer Endpoints](#payer-endpoints)
   - [Create Payer](#create-payer)
   - [Get All Payers](#get-all-payers)
@@ -705,11 +706,69 @@ curl -X DELETE http://localhost:5001/api/functions/683246abcd1234567890/permanen
 ```
 This implementation ensures that only already soft-deleted functions can be permanently removed from the database, adding an extra layer of protection against accidental data loss.
 
+### Get Function Denominations
+Retrieves a summary of all cash denominations for a specific function.
+
+- **URL**: `/functions/:functionId/denominations`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token)
+
+**Parameters**:
+- `functionId` (required): The ID of the function to get denomination summary for
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/functions/683246abcd1234567890/denominations \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "denominations_in_hand": {
+      "2000": 25,
+      "500": 10,
+      "100": 5
+    },
+    "total_in_hand": 55500,
+    "total_received": 75000,
+    "total_returned": 19500,
+    "cash_out_pay": 0,
+    "special_handler_pay": 0,
+    "total_final_amount": 55500,
+    "computer_total": 55500,
+    "difference": 0
+  },
+  "timestamp": "2025-05-12T14:30:00.000Z"
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Failed to generate denomination summary"
+}
+```
+
+**Notes**:
+- Only includes cash payers (where `payer_given_object` is "Cash")
+- Excludes deleted payers (`is_deleted: false`)
+- Calculates net denominations by subtracting returned from received
+- Only non-zero denominations are included in the response
+- `total_in_hand` represents the actual cash amount based on denomination counts
+- `cash_out_pay` and `special_handler_pay` are placeholder fields for future use
+- The response includes a timestamp for tracking when the summary was generated
+
 ## Payer Endpoints
 
 ### Create Payer
-
-Creates a new payer (contributor) for a function.
+Creates a new payer (contributor) for a function with support for cash denomination tracking.
 
 - **URL**: `/payers`
 - **Method**: `POST`
@@ -733,7 +792,16 @@ Creates a new payer (contributor) for a function.
   "payer_city": "Bangalore",
   "payer_address": "456 Park Avenue",
   "current_date": "2025-05-12T12:00:00.000Z",
-  "current_time": "2:00 PM"
+  "current_time": "2:00 PM",
+  "denominations_received": {
+    "2000": 10,
+    "500": 10,
+    "100": 0
+  },
+  "denominations_returned": {
+    "500": 0,
+    "100": 0
+  }
 }
 ```
 
@@ -757,7 +825,12 @@ curl -X POST http://localhost:5001/api/payers \
     "payer_city": "Bangalore",
     "payer_address": "456 Park Avenue",
     "current_date": "2025-05-12T12:00:00.000Z",
-    "current_time": "2:00 PM"
+    "current_time": "2:00 PM",
+    "denominations_received": {
+      "2000": 10,
+      "500": 10
+    },
+    "denominations_returned": {}
   }'
 ```
 
@@ -773,6 +846,15 @@ curl -X POST http://localhost:5001/api/payers \
     "payer_name": "Rahul Kumar",
     "payer_phno": "9876543211",
     "payer_amount": 25000,
+    "payer_given_object": "Cash",
+    "denominations_received": {
+      "2000": 10,
+      "500": 10
+    },
+    "denominations_returned": {},
+    "total_received": 25000,
+    "total_returned": 0,
+    "net_amount": 25000,
     "created_at": "2025-05-12T12:00:00.000Z",
     "updated_at": "2025-05-12T12:00:00.000Z"
     // ... other fields
@@ -780,52 +862,34 @@ curl -X POST http://localhost:5001/api/payers \
 }
 ```
 
-### Get All Payers
-
-Retrieves a list of all payers, optionally filtered by function.
-
-- **URL**: `/payers`
-- **Method**: `GET`
-- **Auth Required**: Yes (JWT Token)
-- **Query Parameters**:
-  - `function_id`: Filter by function ID (optional)
-  - `page`: Page number (default: 1)
-  - `limit`: Results per page (default: 10)
-  - `search`: Search term for payer name or phone
-
-**Example Request**:
-
-```bash
-curl -X GET http://localhost:5001/api/payers?function_id=683246abcd1234567890&page=1&limit=10 \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
-
-**Success Response**:
+**Error Responses**:
 
 ```json
 {
-  "success": true,
-  "count": 1,
-  "pagination": {
-    "current": 1,
-    "pages": 1,
-    "total": 1
-  },
-  "data": [
-    {
-      "_id": "683247efgh5678901234",
-      "function_id": "683246abcd1234567890",
-      "function_name": "Wedding Reception",
-      "payer_name": "Rahul Kumar",
-      "payer_phno": "9876543211",
-      "payer_amount": 25000,
-      "payer_relation": "Friend",
-      "created_at": "2025-05-12T12:00:00.000Z"
-      // ... other fields
-    }
-  ]
+  "success": false,
+  "error": "Payer with this phone number already exists"
 }
 ```
+
+```json
+{
+  "success": false,
+  "error": "Net amount from denominations does not match payer amount"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Error processing denomination data"
+}
+```
+
+**Notes**:
+- Phone number validation ensures uniqueness (only if phone number is provided)
+- For cash payments, denomination tracking is supported with automatic calculation of totals
+- The system automatically calculates `total_received`, `total_returned`, and `net_amount` based on denominations
+- If `payer_amount` is provided, it must match the calculated `net_amount`
 
 ### Get Payer by ID
 
@@ -880,8 +944,7 @@ curl -X GET http://localhost:5001/api/payers/683247efgh5678901234 \
 ```
 
 ### Update Payer
-
-Updates a specific payer by its ID.
+Updates a specific payer by its ID with support for cash denomination updates and mandatory edit logging.
 
 - **URL**: `/payers/:id`
 - **Method**: `PUT`
@@ -894,7 +957,16 @@ Updates a specific payer by its ID.
 {
   "payer_amount": 30000,
   "payer_cash_method": "Cash",
-  "reason_for_edit": "Corrected payment amount and updated payment method"
+  "denominations_received": {
+    "2000": 15,
+    "500": 0,
+    "100": 0
+  },
+  "denominations_returned": {
+    "500": 0,
+    "100": 0
+  },
+  "reason_for_edit": "Corrected payment amount and updated denominations"
 }
 ```
 
@@ -907,7 +979,10 @@ curl -X PUT http://localhost:5001/api/payers/683247efgh5678901234 \
   -d '{
     "payer_amount": 30000,
     "payer_cash_method": "Cash",
-    "reason_for_edit": "Corrected payment amount and updated payment method"
+    "denominations_received": {
+      "2000": 15
+    },
+    "reason_for_edit": "Corrected payment amount and updated denominations"
   }'
 ```
 
@@ -920,20 +995,21 @@ curl -X PUT http://localhost:5001/api/payers/683247efgh5678901234 \
     "_id": "683247efgh5678901234",
     "payer_amount": 30000,
     "payer_cash_method": "Cash",
-    // ... other fields (unchanged)
+    "denominations_received": {
+      "2000": 15
+    },
+    "denominations_returned": {},
+    "total_received": 30000,
+    "total_returned": 0,
+    "net_amount": 30000,
     "updated_at": "2025-05-12T13:00:00.000Z"
-  }
+    // ... other fields
+  },
+  "_cache_cleared": true
 }
 ```
 
 **Error Responses**:
-
-```json
-{
-  "success": false,
-  "error": "Payer not found"
-}
-```
 
 ```json
 {
@@ -945,7 +1021,14 @@ curl -X PUT http://localhost:5001/api/payers/683247efgh5678901234 \
 ```json
 {
   "success": false,
-  "error": "User not found"
+  "error": "Net amount from denominations does not match payer amount"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Payer not found"
 }
 ```
 
@@ -957,12 +1040,12 @@ curl -X PUT http://localhost:5001/api/payers/683247efgh5678901234 \
 ```
 
 **Notes**:
-
-- The `reason_for_edit` field is now required and must explain why the payer information is being updated
-- All updates are logged in the edit history and can be viewed through the Edit Logs API
-- The `function_id` field cannot be modified with this endpoint
-- The cache is automatically invalidated after an update to ensure fresh data is displayed
-- Changes to payer information are tracked with before and after values in the edit logs
+- The `reason_for_edit` field is **mandatory** for all updates
+- All updates are logged with before/after values and changed fields
+- The `function_id` field cannot be modified
+- For cash payments, updating denominations automatically recalculates totals
+- Enhanced cache invalidation ensures data consistency across all related endpoints
+- The response includes `_cache_cleared: true` to confirm cache invalidation
 
 ### Delete Payer
 
