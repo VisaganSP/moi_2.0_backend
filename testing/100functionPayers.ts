@@ -1,4 +1,4 @@
-// Script to insert 100 unique Tamil payers for the wedding function
+// Script to insert 100 unique Tamil payers for the wedding function with denomination support
 import { MongoClient, ObjectId } from 'mongodb';
 import * as bcrypt from 'bcryptjs';
 
@@ -6,7 +6,21 @@ import * as bcrypt from 'bcryptjs';
 const uri = 'mongodb://admin:password@localhost:27017/moi_software_db?authSource=admin';
 const dbName = 'moi_software_db';
 
-// Define the Payer interface to fix the TypeScript error
+// Define denomination interface
+interface Denominations {
+  "2000"?: number;
+  "500"?: number;
+  "200"?: number;
+  "100"?: number;
+  "50"?: number;
+  "20"?: number;
+  "10"?: number;
+  "5"?: number;
+  "2"?: number;
+  "1"?: number;
+}
+
+// Define the Payer interface with denomination support
 interface Payer {
   function_id: string;
   function_name: string;
@@ -27,6 +41,12 @@ interface Payer {
   deleted_at: null;
   createdAt: Date;
   updatedAt: Date;
+  // New denomination fields
+  denominations_received?: Denominations;
+  denominations_returned?: Denominations;
+  total_received?: number;
+  total_returned?: number;
+  net_amount?: number;
 }
 
 // The specific function_id we're adding payers for
@@ -76,9 +96,76 @@ const giftItems = [
   "வெள்ளி குத்துவிளக்கு", "வெள்ளி குங்கும சிமிழ்", "பூஜை பொருட்கள்", "தங்க காதோலை", "தங்க காசு", "தங்க மேலை", "கிருஷ்ணர் சிலை", "வெள்ளி பூஜை பொருட்கள் செட்", "வெள்ளி தாம்பாளம்", "மிக்ஸி"
 ];
 
+// Function to generate denominations for a given amount
+function generateDenominations(amount: number, includeChange: boolean = false): { received: Denominations, returned: Denominations } {
+  const denomValues = [2000, 500, 200, 100, 50, 20, 10, 5, 2, 1];
+  const received: Denominations = {};
+  const returned: Denominations = {};
+  
+  let remainingAmount = amount;
+  
+  // If we need to include change, give more than the required amount
+  if (includeChange && Math.random() > 0.7) { // 30% chance of giving more and needing change
+    // Add extra amount (between 100-1000)
+    const extraAmount = Math.floor(Math.random() * 900) + 100;
+    remainingAmount = amount + extraAmount;
+    
+    // Generate denominations for the total amount received
+    let tempAmount = remainingAmount;
+    for (const denom of denomValues) {
+      if (tempAmount >= denom && Math.random() > 0.3) { // Randomly decide to use this denomination
+        const count = Math.floor(tempAmount / denom);
+        const useCount = Math.min(count, Math.floor(Math.random() * 5) + 1); // Use 1-5 notes max
+        if (useCount > 0) {
+          received[denom.toString() as keyof Denominations] = useCount;
+          tempAmount -= useCount * denom;
+        }
+      }
+    }
+    
+    // Generate denominations for change to return
+    let changeAmount = remainingAmount - amount;
+    for (const denom of denomValues) {
+      if (changeAmount >= denom) {
+        const count = Math.floor(changeAmount / denom);
+        if (count > 0) {
+          returned[denom.toString() as keyof Denominations] = count;
+          changeAmount -= count * denom;
+        }
+      }
+    }
+  } else {
+    // Exact amount or slightly mixed denominations
+    for (const denom of denomValues) {
+      if (remainingAmount >= denom && Math.random() > 0.3) {
+        const count = Math.floor(remainingAmount / denom);
+        const useCount = Math.min(count, Math.floor(Math.random() * 10) + 1); // Use 1-10 notes max
+        if (useCount > 0) {
+          received[denom.toString() as keyof Denominations] = useCount;
+          remainingAmount -= useCount * denom;
+        }
+      }
+    }
+    
+    // Handle remaining amount with smaller denominations
+    while (remainingAmount > 0) {
+      for (const denom of denomValues) {
+        if (remainingAmount >= denom) {
+          const currentCount = received[denom.toString() as keyof Denominations] || 0;
+          received[denom.toString() as keyof Denominations] = currentCount + 1;
+          remainingAmount -= denom;
+          break;
+        }
+      }
+    }
+  }
+  
+  return { received, returned };
+}
+
 // Cash or gift options
-const paymentTypes = ["பணம்", "பொருள்"];
-const paymentMethods = ["Cash", "GPay", ""];
+const paymentTypes = ["Cash", "Gift"];
+const paymentMethods = ["Cash", "GPay", "Bank Transfer"];
 
 async function insertHundredPayers() {
   try {
@@ -106,11 +193,14 @@ async function insertHundredPayers() {
     // Generate 100 unique payers
     const payers: Payer[] = [];
     
-    // Phone number counter starting point
-    let phoneCounter = 8800000000;
+    // Phone number counter starting point - ensure uniqueness
+    let phoneCounter = 9800000000 + Math.floor(Math.random() * 100000);
     
     // Create the base date for transaction recording
     const baseDate = new Date("2025-06-10T09:00:00.000Z");
+    
+    // Track used phone numbers to ensure uniqueness
+    const usedPhoneNumbers = new Set<string>();
     
     // Generate 100 unique payers
     for (let i = 0; i < 100; i++) {
@@ -123,25 +213,62 @@ async function insertHundredPayers() {
       const relation = tamilRelations[Math.floor(Math.random() * tamilRelations.length)];
       const city = tamilCities[Math.floor(Math.random() * tamilCities.length)];
       
-      // Increment phone number to ensure uniqueness
-      const phone = (phoneCounter++).toString();
+      // Generate unique phone number
+      let phone = "";
+      do {
+        phone = (phoneCounter++).toString();
+      } while (usedPhoneNumbers.has(phone));
+      usedPhoneNumbers.add(phone);
       
-      // Determine if this payer gives cash or gift
-      const paymentType = paymentTypes[Math.floor(Math.random() * paymentTypes.length)];
+      // Determine if this payer gives cash or gift (70% cash, 30% gift)
+      const paymentType = Math.random() < 0.7 ? "Cash" : "Gift";
       
       // Set parameters based on payment type
       let paymentAmount = 0;
       let paymentMethod = "";
       let giftName = "";
+      let denominations_received: Denominations = {};
+      let denominations_returned: Denominations = {};
+      let total_received = 0;
+      let total_returned = 0;
+      let net_amount = 0;
       
-      if (paymentType === "பணம்") {
+      if (paymentType === "Cash") {
         // For cash payments, generate an amount between 1,000 and 50,000
         paymentAmount = Math.floor(Math.random() * 49000) + 1000;
         // Round to nearest 500
         paymentAmount = Math.round(paymentAmount / 500) * 500;
         
-        // Set payment method (Cash or GPay)
-        paymentMethod = paymentMethods[Math.floor(Math.random() * 2)]; // Only Cash or GPay for payments
+        // Set payment method for cash transactions
+        const methodRandom = Math.random();
+        if (methodRandom < 0.6) {
+          paymentMethod = "Cash";
+          
+          // Generate denominations for cash payments
+          const denomData = generateDenominations(paymentAmount, true);
+          denominations_received = denomData.received;
+          denominations_returned = denomData.returned;
+          
+          // Calculate totals
+          for (const [denom, count] of Object.entries(denominations_received)) {
+            total_received += parseInt(denom) * (count as number);
+          }
+          for (const [denom, count] of Object.entries(denominations_returned)) {
+            total_returned += parseInt(denom) * (count as number);
+          }
+          net_amount = total_received - total_returned;
+          
+          // Ensure net_amount matches payer_amount
+          if (net_amount !== paymentAmount) {
+            console.warn(`Denomination mismatch for payer ${i}: expected ${paymentAmount}, got ${net_amount}. Adjusting...`);
+            // Adjust to make it match
+            paymentAmount = net_amount;
+          }
+        } else if (methodRandom < 0.85) {
+          paymentMethod = "GPay";
+        } else {
+          paymentMethod = "Bank Transfer";
+        }
       } else {
         // For gifts, set a gift name
         giftName = giftItems[Math.floor(Math.random() * giftItems.length)];
@@ -157,7 +284,8 @@ async function insertHundredPayers() {
       transactionDate.setHours(hourOffset, minuteOffset);
       
       // Format time as a string
-      const timeStr = `${hourOffset}:${minuteOffset.toString().padStart(2, '0')} ${hourOffset >= 12 ? 'PM' : 'AM'}`;
+      const hour12 = hourOffset > 12 ? hourOffset - 12 : hourOffset;
+      const timeStr = `${hour12}:${minuteOffset.toString().padStart(2, '0')} ${hourOffset >= 12 ? 'PM' : 'AM'}`;
       
       // Create payer object
       const payer: Payer = {
@@ -182,6 +310,15 @@ async function insertHundredPayers() {
         updatedAt: transactionDate
       };
       
+      // Add denomination fields only for cash payments with "Cash" method
+      if (paymentType === "Cash" && paymentMethod === "Cash") {
+        payer.denominations_received = denominations_received;
+        payer.denominations_returned = denominations_returned;
+        payer.total_received = total_received;
+        payer.total_returned = total_returned;
+        payer.net_amount = net_amount;
+      }
+      
       payers.push(payer);
     }
     
@@ -190,18 +327,60 @@ async function insertHundredPayers() {
     console.log(`${payerResult.insertedCount} payers inserted for function: ${FUNCTION_ID}`);
     
     // Calculate statistics
-    const cashPayers = payers.filter(p => p.payer_given_object === "பணம்");
-    const giftPayers = payers.filter(p => p.payer_given_object === "பொருள்");
-    const cashAmount = cashPayers.reduce((sum, payer) => sum + payer.payer_amount, 0);
+    const cashPayers = payers.filter(p => p.payer_given_object === "Cash");
+    const giftPayers = payers.filter(p => p.payer_given_object === "Gift");
+    const cashMethodPayers = payers.filter(p => p.payer_given_object === "Cash" && p.payer_cash_method === "Cash");
+    const gpayPayers = payers.filter(p => p.payer_given_object === "Cash" && p.payer_cash_method === "GPay");
+    const bankTransferPayers = payers.filter(p => p.payer_given_object === "Cash" && p.payer_cash_method === "Bank Transfer");
+    
+    const totalCashAmount = cashPayers.reduce((sum, payer) => sum + payer.payer_amount, 0);
+    const cashWithDenominations = cashMethodPayers.reduce((sum, payer) => sum + payer.payer_amount, 0);
     
     console.log("\n--- Statistics ---");
     console.log(`Total Payers: ${payers.length}`);
-    console.log(`Cash Payers: ${cashPayers.length} (Total: ₹${cashAmount.toLocaleString()})`);
+    console.log(`Cash Payers: ${cashPayers.length} (Total: ₹${totalCashAmount.toLocaleString()})`);
+    console.log(`  - Cash Method: ${cashMethodPayers.length} (₹${cashWithDenominations.toLocaleString()}) - with denominations`);
+    console.log(`  - GPay: ${gpayPayers.length}`);
+    console.log(`  - Bank Transfer: ${bankTransferPayers.length}`);
     console.log(`Gift Payers: ${giftPayers.length}`);
+    
+    // Calculate denomination summary
+    const denominationSummary: Denominations = {
+      "2000": 0, "500": 0, "200": 0, "100": 0, "50": 0,
+      "20": 0, "10": 0, "5": 0, "2": 0, "1": 0
+    };
+    
+    cashMethodPayers.forEach(payer => {
+      // Add received denominations
+      if (payer.denominations_received) {
+        Object.entries(payer.denominations_received).forEach(([denom, count]) => {
+          denominationSummary[denom as keyof Denominations] = 
+            (denominationSummary[denom as keyof Denominations] || 0) + (count as number);
+        });
+      }
+      // Subtract returned denominations
+      if (payer.denominations_returned) {
+        Object.entries(payer.denominations_returned).forEach(([denom, count]) => {
+          denominationSummary[denom as keyof Denominations] = 
+            (denominationSummary[denom as keyof Denominations] || 0) - (count as number);
+        });
+      }
+    });
+    
+    console.log("\n--- Denomination Summary (Net in Hand) ---");
+    let totalInHand = 0;
+    Object.entries(denominationSummary).forEach(([denom, count]) => {
+      if (count > 0) {
+        const value = parseInt(denom) * count;
+        totalInHand += value;
+        console.log(`₹${denom}: ${count} notes = ₹${value.toLocaleString()}`);
+      }
+    });
+    console.log(`Total Cash in Hand: ₹${totalInHand.toLocaleString()}`);
     
     // Close the connection
     await client.close();
-    console.log("MongoDB connection closed");
+    console.log("\nMongoDB connection closed");
     
   } catch (error) {
     console.error("Error inserting payers:", error);

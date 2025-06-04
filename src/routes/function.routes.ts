@@ -8,7 +8,8 @@ import {
   restoreFunction,
   getDeletedFunctions,
   getFunctionsByDateRange,
-  permanentlyDeleteFunction
+  permanentlyDeleteFunction,
+  getFunctionDenominations
 } from '../controllers/function.controller';
 import { getPayersByFunction, getTotalPaymentByFunction } from '../controllers/payer.controller';
 import { protect, admin } from '../middleware/auth.middleware';
@@ -67,5 +68,8 @@ router.get('/:functionId/city-distribution', getCityDistribution);
 router.get('/:functionId/amount-distribution', getAmountDistribution);
 router.get('/:functionId/cash-vs-gifts', getCashVsGifts);
 router.get('/:functionId/top-contributors', getTopContributors);
+
+// Denominations route
+router.get('/:functionId/denominations', getFunctionDenominations);
 
 export default router;

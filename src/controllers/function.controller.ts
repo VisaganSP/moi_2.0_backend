@@ -6,6 +6,7 @@ import { AuthenticatedRequest } from '../types';
 import { invalidateCacheByPattern } from '../utils/cacheUtils';
 import { findChangedFields, sanitizeForEditLog } from '../utils/editLogHelpers';
 import EditLog from '../models/EditLog.model';
+import Payer from '../models/Payer.model';
 
 // @desc    Create a new function (Admin only)
 // @route   POST /api/functions
@@ -464,5 +465,99 @@ export const permanentlyDeleteFunction = asyncHandler(
       data: {},
       message: 'Function permanently deleted'
     });
+  }
+);
+
+// @desc    Get denomination summary for a function
+// @route   GET /api/functions/:functionId/denominations
+// @access  Private
+export const getFunctionDenominations = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const functionId = req.params.functionId;
+      
+      console.log(`Generating denomination summary for function: ${functionId}`);
+      
+      // Get all payers for this function that are not deleted and involve cash
+      const payers = await Payer.find({ 
+        function_id: functionId,
+        payer_given_object: 'Cash',
+        is_deleted: false 
+      }).lean();
+      
+      console.log(`Found ${payers.length} cash payers for function ID: ${functionId}`);
+      
+      // Initialize denomination counters
+      const denominations_in_hand: Record<string, number> = {
+        "2000": 0, 
+        "500": 0, 
+        "200": 0, 
+        "100": 0, 
+        "50": 0, 
+        "20": 0, 
+        "10": 0, 
+        "5": 0, 
+        "2": 0, 
+        "1": 0
+      };
+      
+      let total_received = 0;
+      let total_returned = 0;
+      
+      // Calculate totals
+      payers.forEach(payer => {
+        // Add received denominations
+        if (payer.denominations_received) {
+          Object.keys(denominations_in_hand).forEach(denom => {
+            // Type assertion to tell TypeScript that this is a valid key
+            const recValue = (payer.denominations_received as Record<string, number>)[denom] || 0;
+            denominations_in_hand[denom] += recValue;
+            total_received += recValue * parseInt(denom);
+          });
+        }
+        
+        // Subtract returned denominations
+        if (payer.denominations_returned) {
+          Object.keys(denominations_in_hand).forEach(denom => {
+            // Type assertion to tell TypeScript that this is a valid key
+            const retValue = (payer.denominations_returned as Record<string, number>)[denom] || 0;
+            denominations_in_hand[denom] -= retValue;
+            total_returned += retValue * parseInt(denom);
+          });
+        }
+      });
+      
+      // Calculate total in hand
+      const total_in_hand = Object.keys(denominations_in_hand).reduce((sum, denom) => {
+        return sum + (denominations_in_hand[denom] * parseInt(denom));
+      }, 0);
+      
+      // Clean up the response by removing denominations with zero count
+      const cleanedDenominations: Record<string, number> = { ...denominations_in_hand };
+      Object.keys(cleanedDenominations).forEach(key => {
+        if (cleanedDenominations[key] === 0) {
+          delete cleanedDenominations[key];
+        }
+      });
+      
+      res.status(200).json({
+        success: true,
+        data: {
+          denominations_in_hand: cleanedDenominations,
+          total_in_hand,
+          total_received,
+          total_returned,
+          cash_out_pay: 0, // Default value, can be updated in future
+          special_handler_pay: 0, // Default value, can be updated in future
+          total_final_amount: total_in_hand, // Same as total_in_hand by default
+          computer_total: total_in_hand, // Same as total_in_hand by default
+          difference: 0 // Default value
+        },
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error generating denomination summary:', error);
+      next(new ErrorResponse('Failed to generate denomination summary', 500));
+    }
   }
 );
