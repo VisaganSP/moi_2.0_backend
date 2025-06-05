@@ -47,6 +47,16 @@ export interface FunctionDocument extends Document {
   updated_at: Date;
 }
 
+interface SearchParams {
+  searchParam: string;
+  searchQuery: string;
+  page?: string;
+  limit?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  searchType?: 'partial' | 'exact' | 'fuzzy' | 'startsWith' | 'endsWith';
+}
+
 export interface DenominationCounts {
   "2000"?: number;
   "500"?: number;

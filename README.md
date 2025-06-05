@@ -23,6 +23,8 @@ A comprehensive function and payer management system built with the MERN stack (
 
 MOI Software Online is a web application designed to manage functions (events) and payers (contributors). The system tracks function details, expenses, and contributions while providing a searchable and efficient interface for managing this data.
 
+![Moi Software Backend Overview](../server/docs/images/overview.png)
+
 ## Features
 
 - User authentication and authorization
@@ -114,6 +116,8 @@ JWT_EXPIRE=30d
 
 ## API Endpoints
 
+![Moi Software API Structure](../server/docs/images/api_structure.png)
+
 ### Authentication
 
 - **Register**: `POST /api/auth/register`
@@ -133,6 +137,10 @@ JWT_EXPIRE=30d
 - **Permanently Delete Function**: `DELETE /api/functions/:functionId/permanent`
 - **Get Function Denominations**: `GET /api/functions/:functionId/denominations`
 
+### Function Search
+
+- **Search Functions**: `GET /api/functions/search`
+
 ### Payers
 
 - **Create Payer**: `POST /api/payers`
@@ -151,6 +159,11 @@ JWT_EXPIRE=30d
 - **Get Unique Payer Relations**: `GET /api/payers/unique/relations`
 - **Get Unique Payer Cities**: `GET /api/payers/unique/cities`
 - **Get Unique Payer Work Types**: `GET /api/payers/unique/works`
+
+### Payer Search
+
+- **Search All Payers**: `GET /api/payers/search`
+- **Search Payers in Function**: `GET /api/functions/:functionId/payers/search`
 
 ### Visualization
 

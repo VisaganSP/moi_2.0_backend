@@ -20,6 +20,27 @@ This document provides comprehensive information about the MOI Software Online A
   - [Get Functions by Date Range](#get-functions-by-date-range)
   - [Delete Function Permanently](#permanently-delete-function)
   - [Get Function Denominations](#get-function-denominations)
+- [Function Search Endpoints](#function-search-endpoints)
+  - [Base Search Endpoint](#base-search-endpoint)
+  - [Query Parameters](#query-parameters)
+  - [Searchable Fields](#searchable-fields)
+  - [Search Types](#search-types)
+    - [Partial Search](#1-partial-search-default)
+    - [Exact Match](#2-exact-match)
+    - [Starts With](#3-starts-with)
+    - [Ends With](#4-ends-with)
+    - [Fuzzy Search](#5-fuzzy-search)
+  - [Special Field Searches](#special-field-searches)
+    - [Phone Number Search](#phone-number-search)
+    - [Amount Search](#amount-search)
+    - [Date Search](#date-search)
+  - [Advanced Search Examples](#advanced-search-examples)
+    - [Search with Pagination](#search-with-pagination)
+    - [Search with Custom Sorting](#search-with-custom-sorting)
+  - [Response Format](#response-format)
+  - [Error Responses](#error-responses)
+  - [Performance Notes](#performance-notes)
+  - [Use Cases](#use-cases)
 - [Payer Endpoints](#payer-endpoints)
   - [Create Payer](#create-payer)
   - [Get All Payers](#get-all-payers)
@@ -37,6 +58,27 @@ This document provides comprehensive information about the MOI Software Online A
   - [Get Unique Payer Relations](#get-unique-payer-relations)
   - [Get Unique Payer Cities](#get-unique-payer-cities)
   - [Get Unique Payer Work Types](#get-unique-payer-work-types)
+- [Payer Search Endpoints](#payer-search-endpoints)
+  - [Base Search Endpoints](#base-search-endpoints)
+  - [Query Parameters](#query-parameters-1)
+  - [Searchable Fields](#searchable-fields-1)
+  - [Search Types](#search-types-1)
+    - [Partial Search](#1-partial-search-default-1)
+    - [Exact Match](#2-exact-match-1)
+    - [Starts With](#3-starts-with-1)
+    - [Ends With](#4-ends-with-1)
+    - [Fuzzy Search](#5-fuzzy-search-1)
+  - [Special Field Searches](#special-field-searches-1)
+    - [Phone Number Search](#phone-number-search-1)
+    - [Amount Search](#amount-search-1)
+    - [Payment Method Search](#payment-method-search)
+  - [Advanced Search Examples](#advanced-search-examples-1)
+    - [Search with Pagination](#search-with-pagination-1)
+    - [Search with Custom Sorting](#search-with-custom-sorting-1)
+  - [Response Format](#response-format-1)
+  - [Error Responses](#error-responses-1)
+  - [Performance Notes](#performance-notes-1)
+  - [Use Cases](#use-cases-1)
 - [Visualization Endpoints](#visualization-endpoints)
   - [Get Payment Method Distribution](#get-payment-method-distribution)
   - [Get Relation Distribution](#get-relation-distribution)
@@ -50,6 +92,10 @@ This document provides comprehensive information about the MOI Software Online A
   - [Get Edit Logs by Target](#get-edit-logs-by-target)
   - [Get Edit Logs by User](#get-edit-logs-by-user)
 - [MongoDB Express Access](#mongodb-express-access)
+
+### API Endpoint Hierarchy
+
+![API Endpoint Hierarchy](images/api_hierarchy.png)
 
 ## Base URL
 
@@ -764,6 +810,261 @@ curl -X GET http://localhost:5001/api/functions/683246abcd1234567890/denominatio
 - `total_in_hand` represents the actual cash amount based on denomination counts
 - `cash_out_pay` and `special_handler_pay` are placeholder fields for future use
 - The response includes a timestamp for tracking when the summary was generated
+
+## Function Search Endpoints
+
+The MOI Software API provides powerful search capabilities for functions with various search types and filters. All search endpoints require authentication via JWT token.
+
+### Base Search Endpoint
+
+```
+GET /api/functions/search
+```
+
+### Query Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `searchParam` | string | Yes | - | The field to search in |
+| `searchQuery` | string | Yes | - | The search value |
+| `searchType` | string | No | `partial` | Type of search to perform |
+| `page` | number | No | 1 | Page number for pagination |
+| `limit` | number | No | 10 | Number of results per page |
+| `sortBy` | string | No | `created_at` | Field to sort results by |
+| `sortOrder` | string | No | `desc` | Sort order (`asc` or `desc`) |
+
+### Searchable Fields
+
+The following fields can be used as `searchParam`:
+
+- `function_id` - Unique function identifier
+- `function_name` - Name of the function/event
+- `function_owner_name` - Name of the function owner
+- `function_owner_city` - City of the function owner
+- `function_owner_address` - Address of the function owner
+- `function_owner_phno` - Phone number of the function owner
+- `function_amt_spent` - Amount spent on the function
+- `function_hero_name` - Hero/Groom name
+- `function_heroine_name` - Heroine/Bride name
+- `function_held_place` - Venue of the function
+- `function_held_city` - City where function is held
+- `function_start_date` - Start date of the function
+
+### Search Types
+
+The API supports five different search types via the `searchType` parameter:
+
+#### 1. Partial Search (Default)
+Finds matches containing the search query anywhere in the field.
+
+```bash
+# Find all functions with "Wedding" anywhere in the name
+curl -X GET "http://localhost:5001/api/functions/search?searchParam=function_name&searchQuery=Wedding" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Find functions in cities containing "Chen"
+curl -X GET "http://localhost:5001/api/functions/search?searchParam=function_held_city&searchQuery=Chen" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**Examples:**
+- Query: "Wed" → Finds: "Wedding Reception", "Wednesday Event", "NewWedding"
+- Query: "chen" → Finds: "Chennai", "Cochen", "Meenachendur"
+
+#### 2. Exact Match
+Finds only exact matches of the search query.
+
+```bash
+# Find functions with exact name "Wedding Reception"
+curl -X GET "http://localhost:5001/api/functions/search?searchParam=function_name&searchQuery=Wedding Reception&searchType=exact" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Find functions with exact phone number
+curl -X GET "http://localhost:5001/api/functions/search?searchParam=function_owner_phno&searchQuery=9876543210&searchType=exact" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+#### 3. Starts With
+Finds matches that begin with the search query.
+
+```bash
+# Find functions starting with "Wed"
+curl -X GET "http://localhost:5001/api/functions/search?searchParam=function_name&searchQuery=Wed&searchType=startsWith" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Find owner names starting with "Raj"
+curl -X GET "http://localhost:5001/api/functions/search?searchParam=function_owner_name&searchQuery=Raj&searchType=startsWith" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**Examples:**
+- Query: "Wed" → Finds: "Wedding", "Wednesday" (NOT "NewWedding")
+- Query: "Raj" → Finds: "Rajesh", "Rajan" (NOT "Sivaraj")
+
+#### 4. Ends With
+Finds matches that end with the search query.
+
+```bash
+# Find cities ending with "pur"
+curl -X GET "http://localhost:5001/api/functions/search?searchParam=function_held_city&searchQuery=pur&searchType=endsWith" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Find venues ending with "Hall"
+curl -X GET "http://localhost:5001/api/functions/search?searchParam=function_held_place&searchQuery=Hall&searchType=endsWith" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**Examples:**
+- Query: "pur" → Finds: "Kanpur", "Jaipur" (NOT "Puri")
+- Query: "Hall" → Finds: "Marriage Hall", "Community Hall"
+
+#### 5. Fuzzy Search
+Finds matches allowing characters between search query letters (useful for typos).
+
+```bash
+# Find "Wedding" even with typo "Wdng"
+curl -X GET "http://localhost:5001/api/functions/search?searchParam=function_name&searchQuery=Wdng&searchType=fuzzy" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Find "Chennai" with fuzzy match "Chni"
+curl -X GET "http://localhost:5001/api/functions/search?searchParam=function_held_city&searchQuery=Chni&searchType=fuzzy" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**Examples:**
+- Query: "Wdng" → Finds: "Wedding" (W...d...n...g)
+- Query: "Chni" → Finds: "Chennai" (Ch...n...i)
+
+### Special Field Searches
+
+#### Phone Number Search
+Phone numbers default to "starts with" search for partial matching.
+
+```bash
+# Find all phone numbers starting with "987"
+curl -X GET "http://localhost:5001/api/functions/search?searchParam=function_owner_phno&searchQuery=987" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Find exact phone number
+curl -X GET "http://localhost:5001/api/functions/search?searchParam=function_owner_phno&searchQuery=9876543210&searchType=exact" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+#### Amount Search
+Searches within ±10% range of the specified amount.
+
+```bash
+# Find functions with budget around 500000 (450000-550000)
+curl -X GET "http://localhost:5001/api/functions/search?searchParam=function_amt_spent&searchQuery=500000" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+#### Date Search
+Searches for functions on a specific date.
+
+```bash
+# Find functions on June 15, 2025
+curl -X GET "http://localhost:5001/api/functions/search?searchParam=function_start_date&searchQuery=2025-06-15" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Advanced Search Examples
+
+#### Search with Pagination
+
+```bash
+# Get page 2 with 20 results per page
+curl -X GET "http://localhost:5001/api/functions/search?searchParam=function_held_city&searchQuery=Chennai&page=2&limit=20" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+#### Search with Custom Sorting
+
+```bash
+# Sort by function name in ascending order
+curl -X GET "http://localhost:5001/api/functions/search?searchParam=function_held_city&searchQuery=Chennai&sortBy=function_name&sortOrder=asc" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Sort by start date in descending order
+curl -X GET "http://localhost:5001/api/functions/search?searchParam=function_name&searchQuery=Wedding&sortBy=function_start_date&sortOrder=desc" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Response Format
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "683246abcd1234567890",
+      "function_id": "wedding-reception-john_doe-chennai-2025-06-15-10_00_am",
+      "function_name": "Wedding Reception",
+      "function_owner_name": "John Doe",
+      "function_owner_city": "Chennai",
+      "function_held_city": "Chennai",
+      "function_start_date": "2025-06-15T00:00:00.000Z",
+      // ... other fields
+    }
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "totalPages": 5,
+    "totalItems": 45,
+    "itemsPerPage": 10,
+    "hasNextPage": true,
+    "hasPrevPage": false,
+    "nextPage": 2,
+    "prevPage": null
+  },
+  "search": {
+    "field": "function_name",
+    "query": "Wedding",
+    "type": "partial",
+    "resultCount": 10
+  }
+}
+```
+
+### Error Responses
+
+```json
+{
+  "success": false,
+  "error": "Both searchParam and searchQuery are required"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Invalid searchParam. Allowed fields: function_id, function_name, ..."
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Invalid amount value"
+}
+```
+
+### Performance Notes
+
+- All searchable fields are indexed for optimal performance
+- Results are paginated to limit data transfer
+- Search results are lean queries for better performance
+- Case-insensitive searches (except for exact match on phone numbers)
+- Special regex characters are automatically escaped for safety
+
+### Use Cases
+
+1. **Finding Functions by Owner**: Search by `function_owner_name` with partial match
+2. **Location-based Search**: Search by `function_held_city` or `function_owner_city`
+3. **Date-based Search**: Find functions on specific dates using `function_start_date`
+4. **Budget Search**: Find functions within a budget range using `function_amt_spent`
+5. **Contact Search**: Find functions by phone number using `function_owner_phno`
+6. **Venue Search**: Find functions at specific venues using `function_held_place`
 
 ## Payer Endpoints
 
@@ -1520,319 +1821,294 @@ curl -X GET http://localhost:5001/api/payers/unique/works \
 }
 ```
 
-## Edit Logs Endpoints
+## Payer Search Endpoints
 
-### Get All Edit Logs
+The MOI Software API provides powerful search capabilities for payers with various search types and filters. All search endpoints require authentication via JWT token.
 
-Retrieves a list of all edit logs with pagination and filtering options. Admin only.
+### Base Search Endpoints
 
-- **URL**: `/edit-logs`
-- **Method**: `GET`
-- **Auth Required**: Yes (JWT Token with Admin privileges)
-- **Cache**: 5 minutes (300 seconds)
-
-**Query Parameters**:
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `target_id` | String | Filter by target ID |
-| `target_type` | String | Filter by target type (`Function` or `Payer`) |
-| `action` | String | Filter by action type (`update`) |
-| `created_by` | String | Filter by user ID who made the change |
-| `user_email` | String | Filter by user email |
-| `startDate` | Date | Filter by date range start (ISO format) |
-| `endDate` | Date | Filter by date range end (ISO format) |
-| `page` | Number | Page number (default: 1) |
-| `limit` | Number | Results per page (default: 10) |
-
-**Example Request**:
-
-```bash
-curl -X GET "http://localhost:5001/api/edit-logs?target_type=Function&action=update&page=1&limit=10" \
-  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+GET /api/payers/search                           # Search across all payers
+GET /api/functions/:functionId/payers/search    # Search payers within a specific function
 ```
 
-**Success Response**:
+### Query Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `searchParam` | string | Yes | - | The field to search in |
+| `searchQuery` | string | Yes | - | The search value |
+| `searchType` | string | No | `partial` | Type of search to perform |
+| `page` | number | No | 1 | Page number for pagination |
+| `limit` | number | No | 10 | Number of results per page |
+| `sortBy` | string | No | `created_at` | Field to sort results by |
+| `sortOrder` | string | No | `desc` | Sort order (`asc` or `desc`) |
+
+### Searchable Fields
+
+The following fields can be used as `searchParam`:
+
+- `function_id` - Function identifier the payer belongs to
+- `payer_name` - Name of the payer/contributor
+- `payer_phno` - Phone number of the payer
+- `payer_work` - Occupation/Work of the payer
+- `payer_cash_method` - Payment method used (Cash, GPay, Bank Transfer, etc.)
+- `payer_amount` - Amount contributed by the payer
+- `payer_relation` - Relationship with the function owner
+- `payer_city` - City of the payer
+
+### Search Types
+
+The API supports five different search types via the `searchType` parameter:
+
+#### 1. Partial Search (Default)
+Finds matches containing the search query anywhere in the field.
+
+```bash
+# Find all payers with "Kumar" anywhere in the name
+curl -X GET "http://localhost:5001/api/payers/search?searchParam=payer_name&searchQuery=Kumar" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Find payers in a specific function with city containing "Chen"
+curl -X GET "http://localhost:5001/api/functions/wedding-reception-john_doe-chennai-2025-06-15-10_00_am/payers/search?searchParam=payer_city&searchQuery=Chen" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**Examples:**
+- Query: "Raj" → Finds: "Rajesh Kumar", "Suraj Singh", "Rajeev"
+- Query: "chen" → Finds: "Chennai", "Cochen", "Meenachendur"
+
+#### 2. Exact Match
+Finds only exact matches of the search query.
+
+```bash
+# Find payers with exact name "Rajesh Kumar"
+curl -X GET "http://localhost:5001/api/payers/search?searchParam=payer_name&searchQuery=Rajesh Kumar&searchType=exact" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Find payers with exact phone number in a function
+curl -X GET "http://localhost:5001/api/functions/wedding-reception-john_doe-chennai-2025-06-15-10_00_am/payers/search?searchParam=payer_phno&searchQuery=9876543210&searchType=exact" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+#### 3. Starts With
+Finds matches that begin with the search query.
+
+```bash
+# Find payers whose names start with "Raj"
+curl -X GET "http://localhost:5001/api/payers/search?searchParam=payer_name&searchQuery=Raj&searchType=startsWith" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Find payers whose work starts with "Soft" in a specific function
+curl -X GET "http://localhost:5001/api/functions/wedding-reception-john_doe-chennai-2025-06-15-10_00_am/payers/search?searchParam=payer_work&searchQuery=Soft&searchType=startsWith" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**Examples:**
+- Query: "Raj" → Finds: "Rajesh", "Rajan" (NOT "Suraj")
+- Query: "Soft" → Finds: "Software Engineer", "Software Developer" (NOT "Microsoft")
+
+#### 4. Ends With
+Finds matches that end with the search query.
+
+```bash
+# Find cities ending with "pur"
+curl -X GET "http://localhost:5001/api/payers/search?searchParam=payer_city&searchQuery=pur&searchType=endsWith" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Find relations ending with "ther" in a function
+curl -X GET "http://localhost:5001/api/functions/wedding-reception-john_doe-chennai-2025-06-15-10_00_am/payers/search?searchParam=payer_relation&searchQuery=ther&searchType=endsWith" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**Examples:**
+- Query: "pur" → Finds: "Kanpur", "Jaipur" (NOT "Puri")
+- Query: "ther" → Finds: "Brother", "Father", "Mother"
+
+#### 5. Fuzzy Search
+Finds matches allowing characters between search query letters (useful for typos).
+
+```bash
+# Find "Rajesh" even with typo "Rjsh"
+curl -X GET "http://localhost:5001/api/payers/search?searchParam=payer_name&searchQuery=Rjsh&searchType=fuzzy" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Find "Chennai" with fuzzy match "Chni" in a function
+curl -X GET "http://localhost:5001/api/functions/wedding-reception-john_doe-chennai-2025-06-15-10_00_am/payers/search?searchParam=payer_city&searchQuery=Chni&searchType=fuzzy" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**Examples:**
+- Query: "Rjsh" → Finds: "Rajesh" (R...j...s...h)
+- Query: "Chni" → Finds: "Chennai" (Ch...n...i)
+
+### Special Field Searches
+
+#### Phone Number Search
+Phone numbers default to "starts with" search for partial matching.
+
+```bash
+# Find all phone numbers starting with "987" across all payers
+curl -X GET "http://localhost:5001/api/payers/search?searchParam=payer_phno&searchQuery=987" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Find exact phone number in a specific function
+curl -X GET "http://localhost:5001/api/functions/wedding-reception-john_doe-chennai-2025-06-15-10_00_am/payers/search?searchParam=payer_phno&searchQuery=9876543210&searchType=exact" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+#### Amount Search
+Searches within ±5% range of the specified amount (exact match also available).
+
+```bash
+# Find payers who contributed around 25000 (23750-26250)
+curl -X GET "http://localhost:5001/api/payers/search?searchParam=payer_amount&searchQuery=25000" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Find exact amount in a specific function
+curl -X GET "http://localhost:5001/api/functions/wedding-reception-john_doe-chennai-2025-06-15-10_00_am/payers/search?searchParam=payer_amount&searchQuery=25000&searchType=exact" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+#### Payment Method Search
+Case-insensitive search for payment methods.
+
+```bash
+# Find all GPay transactions
+curl -X GET "http://localhost:5001/api/payers/search?searchParam=payer_cash_method&searchQuery=GPay" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Find cash transactions in a specific function
+curl -X GET "http://localhost:5001/api/functions/wedding-reception-john_doe-chennai-2025-06-15-10_00_am/payers/search?searchParam=payer_cash_method&searchQuery=Cash&searchType=exact" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Advanced Search Examples
+
+#### Search with Pagination
+
+```bash
+# Get page 2 with 20 results per page across all payers
+curl -X GET "http://localhost:5001/api/payers/search?searchParam=payer_city&searchQuery=Chennai&page=2&limit=20" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Paginated search within a function
+curl -X GET "http://localhost:5001/api/functions/wedding-reception-john_doe-chennai-2025-06-15-10_00_am/payers/search?searchParam=payer_relation&searchQuery=Friend&page=1&limit=50" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+#### Search with Custom Sorting
+
+```bash
+# Sort by payer name in ascending order
+curl -X GET "http://localhost:5001/api/payers/search?searchParam=payer_city&searchQuery=Chennai&sortBy=payer_name&sortOrder=asc" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Sort by amount in descending order within a function
+curl -X GET "http://localhost:5001/api/functions/wedding-reception-john_doe-chennai-2025-06-15-10_00_am/payers/search?searchParam=payer_relation&searchQuery=Family&sortBy=payer_amount&sortOrder=desc" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Response Format
 
 ```json
 {
   "success": true,
-  "count": 2,
-  "pagination": {
-    "current": 1,
-    "pages": 1,
-    "total": 2
-  },
   "data": [
     {
       "_id": "683247efgh5678901234",
-      "target_id": "683246abcd1234567890",
-      "target_type": "Function",
-      "action": "update",
-      "before_value": {
-        "function_name": "Wedding Reception",
-        "function_amt_spent": 500000
-      },
-      "after_value": {
-        "function_name": "Wedding Reception - Updated",
-        "function_amt_spent": 550000
-      },
-      "reason": "Updated function name and increased budget allocation",
-      "changed_fields": ["function_name", "function_amt_spent"],
-      "created_by": {
-        "_id": "682235dbf95499dd50469312",
-        "username": "adminuser",
-        "email": "admin@example.com"
-      },
-      "user_email": "admin@example.com",
-      "user_name": "Admin User",
-      "created_at": "2025-05-12T13:00:00.000Z"
-    },
-    {
-      "_id": "683247efgh5678901235",
-      "target_id": "683247efgh5678901234",
-      "target_type": "Payer",
-      "action": "update",
-      "before_value": {
-        "payer_name": "Rahul Kumar",
-        "payer_amount": 25000,
-        "payer_cash_method": "Bank Transfer"
-      },
-      "after_value": {
-        "payer_name": "Rahul Kumar",
-        "payer_amount": 30000,
-        "payer_cash_method": "Cash"
-      },
-      "reason": "Corrected payment amount and updated payment method",
-      "changed_fields": ["payer_amount", "payer_cash_method"],
-      "created_by": {
-        "_id": "682235dbf95499dd50469312",
-        "username": "adminuser",
-        "email": "admin@example.com"
-      },
-      "user_email": "admin@example.com",
-      "user_name": "Admin User",
-      "created_at": "2025-05-12T14:00:00.000Z"
+      "function_id": "wedding-reception-john_doe-chennai-2025-06-15-10_00_am",
+      "payer_name": "Rajesh Kumar",
+      "payer_phno": "9876543210",
+      "payer_work": "Software Engineer",
+      "payer_cash_method": "GPay",
+      "payer_amount": 25000,
+      "payer_relation": "Friend",
+      "payer_city": "Chennai",
+      "created_at": "2025-05-12T12:00:00.000Z",
+      // ... other fields
     }
-  ]
-}
-```
-
-### Get Edit Log by ID
-
-Retrieves a specific edit log by its ID. Admin only.
-
-- **URL**: `/edit-logs/:id`
-- **Method**: `GET`
-- **Auth Required**: Yes (JWT Token with Admin privileges)
-- **Cache**: 5 minutes (300 seconds)
-
-**Example Request**:
-
-```bash
-curl -X GET http://localhost:5001/api/edit-logs/683247efgh5678901234 \
-  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
-```
-
-**Success Response**:
-
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "683247efgh5678901234",
-    "target_id": "683246abcd1234567890",
-    "target_type": "Function",
-    "action": "update",
-    "before_value": {
-      "function_name": "Wedding Reception",
-      "function_amt_spent": 500000
-    },
-    "after_value": {
-      "function_name": "Wedding Reception - Updated",
-      "function_amt_spent": 550000
-    },
-    "reason": "Updated function name and increased budget allocation",
-    "changed_fields": ["function_name", "function_amt_spent"],
-    "created_by": {
-      "_id": "682235dbf95499dd50469312",
-      "username": "adminuser",
-      "email": "admin@example.com"
-    },
-    "user_email": "admin@example.com",
-    "user_name": "Admin User",
-    "created_at": "2025-05-12T13:00:00.000Z"
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "totalPages": 5,
+    "totalItems": 45,
+    "itemsPerPage": 10,
+    "hasNextPage": true,
+    "hasPrevPage": false,
+    "nextPage": 2,
+    "prevPage": null
+  },
+  "search": {
+    "field": "payer_name",
+    "query": "Kumar",
+    "type": "partial",
+    "resultCount": 10,
+    "functionId": "wedding-reception-john_doe-chennai-2025-06-15-10_00_am" // Only present in function-specific searches
   }
 }
 ```
 
-**Error Response**:
+### Error Responses
 
 ```json
 {
   "success": false,
-  "error": "Edit log not found with id of 683247efgh5678901234"
+  "error": "Both searchParam and searchQuery are required"
 }
 ```
-
-### Get Edit Logs by Target
-
-Retrieves edit logs for a specific Function or Payer.
-
-- **URL**: `/edit-logs/:targetType/:targetId`
-- **Method**: `GET`
-- **Auth Required**: Yes (JWT Token)
-- **Cache**: 5 minutes (300 seconds)
-
-**URL Parameters**:
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `targetType` | String | Type of target (`Function` or `Payer`) |
-| `targetId` | String | ID of the target |
-
-**Query Parameters**:
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `page` | Number | Page number (default: 1) |
-| `limit` | Number | Results per page (default: 10) |
-
-**Example Request**:
-
-```bash
-curl -X GET http://localhost:5001/api/edit-logs/Function/683246abcd1234567890 \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
-
-**Success Response**:
 
 ```json
 {
-  "success": true,
-  "count": 1,
-  "pagination": {
-    "current": 1,
-    "pages": 1,
-    "total": 1
-  },
-  "data": [
-    {
-      "_id": "683247efgh5678901234",
-      "target_id": "683246abcd1234567890",
-      "target_type": "Function",
-      "action": "update",
-      "before_value": {
-        "function_name": "Wedding Reception",
-        "function_amt_spent": 500000
-      },
-      "after_value": {
-        "function_name": "Wedding Reception - Updated",
-        "function_amt_spent": 550000
-      },
-      "reason": "Updated function name and increased budget allocation",
-      "changed_fields": ["function_name", "function_amt_spent"],
-      "created_by": {
-        "_id": "682235dbf95499dd50469312",
-        "username": "adminuser",
-        "email": "admin@example.com"
-      },
-      "user_email": "admin@example.com",
-      "user_name": "Admin User",
-      "created_at": "2025-05-12T13:00:00.000Z"
-    }
-  ]
+  "success": false,
+  "error": "Invalid searchParam. Allowed fields: function_id, payer_name, payer_phno, payer_work, payer_cash_method, payer_amount, payer_relation, payer_city"
 }
 ```
-
-### Get Edit Logs by User
-
-Retrieves edit logs created by a specific user. Admin only.
-
-- **URL**: `/edit-logs/user/:userId`
-- **Method**: `GET`
-- **Auth Required**: Yes (JWT Token with Admin privileges)
-- **Cache**: 5 minutes (300 seconds)
-
-**URL Parameters**:
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `userId` | String | ID of the user |
-
-**Query Parameters**:
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `page` | Number | Page number (default: 1) |
-| `limit` | Number | Results per page (default: 10) |
-
-**Example Request**:
-
-```bash
-curl -X GET http://localhost:5001/api/edit-logs/user/682235dbf95499dd50469312 \
-  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
-```
-
-**Success Response**:
 
 ```json
 {
-  "success": true,
-  "count": 2,
-  "pagination": {
-    "current": 1,
-    "pages": 1,
-    "total": 2
-  },
-  "data": [
-    {
-      "_id": "683247efgh5678901234",
-      "target_id": "683246abcd1234567890",
-      "target_type": "Function",
-      "action": "update",
-      "before_value": {
-        "function_name": "Wedding Reception",
-        "function_amt_spent": 500000
-      },
-      "after_value": {
-        "function_name": "Wedding Reception - Updated",
-        "function_amt_spent": 550000
-      },
-      "reason": "Updated function name and increased budget allocation",
-      "changed_fields": ["function_name", "function_amt_spent"],
-      "created_by": "682235dbf95499dd50469312",
-      "user_email": "admin@example.com",
-      "user_name": "Admin User",
-      "created_at": "2025-05-12T13:00:00.000Z"
-    },
-    {
-      "_id": "683247efgh5678901235",
-      "target_id": "683247efgh5678901234",
-      "target_type": "Payer",
-      "action": "update",
-      "before_value": {
-        "payer_name": "Rahul Kumar",
-        "payer_amount": 25000,
-        "payer_cash_method": "Bank Transfer"
-      },
-      "after_value": {
-        "payer_name": "Rahul Kumar",
-        "payer_amount": 30000,
-        "payer_cash_method": "Cash"
-      },
-      "reason": "Corrected payment amount and updated payment method",
-      "changed_fields": ["payer_amount", "payer_cash_method"],
-      "created_by": "682235dbf95499dd50469312",
-      "user_email": "admin@example.com",
-      "user_name": "Admin User",
-      "created_at": "2025-05-12T14:00:00.000Z"
-    }
-  ]
+  "success": false,
+  "error": "Invalid amount value"
 }
 ```
+
+### Performance Notes
+
+- All searchable fields are indexed for optimal performance
+- Compound indexes on `function_id` + other fields for function-specific searches
+- Results are paginated to limit data transfer
+- Search results use lean queries for better performance
+- Case-insensitive searches (except for exact match on phone numbers)
+- Special regex characters are automatically escaped for safety
+
+### Use Cases
+
+1. **Global Payer Search**: Find payers across all functions
+   - Use `/api/payers/search` for system-wide searches
+   - Useful for finding duplicate entries or tracking contributions across events
+
+2. **Function-Specific Search**: Find payers within a specific function
+   - Use `/api/functions/:functionId/payers/search` for targeted searches
+   - Ideal for event-specific reporting and analysis
+
+3. **Contact Management**: Search by phone number or name
+   - Quickly find payer contact information
+   - Identify repeat contributors
+
+4. **Financial Analysis**: Search by amount or payment method
+   - Analyze contribution patterns
+   - Track payment method preferences
+
+5. **Relationship Analysis**: Search by relation or city
+   - Understand contributor demographics
+   - Plan targeted communication
+
+6. **Occupation-based Search**: Find payers by profession
+   - Useful for networking and professional outreach
 
 ## Visualization Endpoints
+
+![Recommended Chart Types](images/chart_types.png)
 
 This section provides comprehensive information about the MOI Software Online API endpoints for data visualization.
 
@@ -2229,6 +2505,318 @@ These endpoints are designed to provide data for charts and visualizations in th
 - **Key Metrics**: Contribution amounts by contributor
 
 These endpoints enable rich dashboards and reports for analyzing contribution patterns in functions (events), helping event organizers understand their financial support distribution.
+
+## Edit Logs Endpoints
+
+### Get All Edit Logs
+
+Retrieves a list of all edit logs with pagination and filtering options. Admin only.
+
+- **URL**: `/edit-logs`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token with Admin privileges)
+- **Cache**: 5 minutes (300 seconds)
+
+**Query Parameters**:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `target_id` | String | Filter by target ID |
+| `target_type` | String | Filter by target type (`Function` or `Payer`) |
+| `action` | String | Filter by action type (`update`) |
+| `created_by` | String | Filter by user ID who made the change |
+| `user_email` | String | Filter by user email |
+| `startDate` | Date | Filter by date range start (ISO format) |
+| `endDate` | Date | Filter by date range end (ISO format) |
+| `page` | Number | Page number (default: 1) |
+| `limit` | Number | Results per page (default: 10) |
+
+**Example Request**:
+
+```bash
+curl -X GET "http://localhost:5001/api/edit-logs?target_type=Function&action=update&page=1&limit=10" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "count": 2,
+  "pagination": {
+    "current": 1,
+    "pages": 1,
+    "total": 2
+  },
+  "data": [
+    {
+      "_id": "683247efgh5678901234",
+      "target_id": "683246abcd1234567890",
+      "target_type": "Function",
+      "action": "update",
+      "before_value": {
+        "function_name": "Wedding Reception",
+        "function_amt_spent": 500000
+      },
+      "after_value": {
+        "function_name": "Wedding Reception - Updated",
+        "function_amt_spent": 550000
+      },
+      "reason": "Updated function name and increased budget allocation",
+      "changed_fields": ["function_name", "function_amt_spent"],
+      "created_by": {
+        "_id": "682235dbf95499dd50469312",
+        "username": "adminuser",
+        "email": "admin@example.com"
+      },
+      "user_email": "admin@example.com",
+      "user_name": "Admin User",
+      "created_at": "2025-05-12T13:00:00.000Z"
+    },
+    {
+      "_id": "683247efgh5678901235",
+      "target_id": "683247efgh5678901234",
+      "target_type": "Payer",
+      "action": "update",
+      "before_value": {
+        "payer_name": "Rahul Kumar",
+        "payer_amount": 25000,
+        "payer_cash_method": "Bank Transfer"
+      },
+      "after_value": {
+        "payer_name": "Rahul Kumar",
+        "payer_amount": 30000,
+        "payer_cash_method": "Cash"
+      },
+      "reason": "Corrected payment amount and updated payment method",
+      "changed_fields": ["payer_amount", "payer_cash_method"],
+      "created_by": {
+        "_id": "682235dbf95499dd50469312",
+        "username": "adminuser",
+        "email": "admin@example.com"
+      },
+      "user_email": "admin@example.com",
+      "user_name": "Admin User",
+      "created_at": "2025-05-12T14:00:00.000Z"
+    }
+  ]
+}
+```
+
+### Get Edit Log by ID
+
+Retrieves a specific edit log by its ID. Admin only.
+
+- **URL**: `/edit-logs/:id`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token with Admin privileges)
+- **Cache**: 5 minutes (300 seconds)
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/edit-logs/683247efgh5678901234 \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "683247efgh5678901234",
+    "target_id": "683246abcd1234567890",
+    "target_type": "Function",
+    "action": "update",
+    "before_value": {
+      "function_name": "Wedding Reception",
+      "function_amt_spent": 500000
+    },
+    "after_value": {
+      "function_name": "Wedding Reception - Updated",
+      "function_amt_spent": 550000
+    },
+    "reason": "Updated function name and increased budget allocation",
+    "changed_fields": ["function_name", "function_amt_spent"],
+    "created_by": {
+      "_id": "682235dbf95499dd50469312",
+      "username": "adminuser",
+      "email": "admin@example.com"
+    },
+    "user_email": "admin@example.com",
+    "user_name": "Admin User",
+    "created_at": "2025-05-12T13:00:00.000Z"
+  }
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Edit log not found with id of 683247efgh5678901234"
+}
+```
+
+### Get Edit Logs by Target
+
+Retrieves edit logs for a specific Function or Payer.
+
+- **URL**: `/edit-logs/:targetType/:targetId`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token)
+- **Cache**: 5 minutes (300 seconds)
+
+**URL Parameters**:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `targetType` | String | Type of target (`Function` or `Payer`) |
+| `targetId` | String | ID of the target |
+
+**Query Parameters**:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `page` | Number | Page number (default: 1) |
+| `limit` | Number | Results per page (default: 10) |
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/edit-logs/Function/683246abcd1234567890 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "count": 1,
+  "pagination": {
+    "current": 1,
+    "pages": 1,
+    "total": 1
+  },
+  "data": [
+    {
+      "_id": "683247efgh5678901234",
+      "target_id": "683246abcd1234567890",
+      "target_type": "Function",
+      "action": "update",
+      "before_value": {
+        "function_name": "Wedding Reception",
+        "function_amt_spent": 500000
+      },
+      "after_value": {
+        "function_name": "Wedding Reception - Updated",
+        "function_amt_spent": 550000
+      },
+      "reason": "Updated function name and increased budget allocation",
+      "changed_fields": ["function_name", "function_amt_spent"],
+      "created_by": {
+        "_id": "682235dbf95499dd50469312",
+        "username": "adminuser",
+        "email": "admin@example.com"
+      },
+      "user_email": "admin@example.com",
+      "user_name": "Admin User",
+      "created_at": "2025-05-12T13:00:00.000Z"
+    }
+  ]
+}
+```
+
+### Get Edit Logs by User
+
+Retrieves edit logs created by a specific user. Admin only.
+
+- **URL**: `/edit-logs/user/:userId`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token with Admin privileges)
+- **Cache**: 5 minutes (300 seconds)
+
+**URL Parameters**:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `userId` | String | ID of the user |
+
+**Query Parameters**:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `page` | Number | Page number (default: 1) |
+| `limit` | Number | Results per page (default: 10) |
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/edit-logs/user/682235dbf95499dd50469312 \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "count": 2,
+  "pagination": {
+    "current": 1,
+    "pages": 1,
+    "total": 2
+  },
+  "data": [
+    {
+      "_id": "683247efgh5678901234",
+      "target_id": "683246abcd1234567890",
+      "target_type": "Function",
+      "action": "update",
+      "before_value": {
+        "function_name": "Wedding Reception",
+        "function_amt_spent": 500000
+      },
+      "after_value": {
+        "function_name": "Wedding Reception - Updated",
+        "function_amt_spent": 550000
+      },
+      "reason": "Updated function name and increased budget allocation",
+      "changed_fields": ["function_name", "function_amt_spent"],
+      "created_by": "682235dbf95499dd50469312",
+      "user_email": "admin@example.com",
+      "user_name": "Admin User",
+      "created_at": "2025-05-12T13:00:00.000Z"
+    },
+    {
+      "_id": "683247efgh5678901235",
+      "target_id": "683247efgh5678901234",
+      "target_type": "Payer",
+      "action": "update",
+      "before_value": {
+        "payer_name": "Rahul Kumar",
+        "payer_amount": 25000,
+        "payer_cash_method": "Bank Transfer"
+      },
+      "after_value": {
+        "payer_name": "Rahul Kumar",
+        "payer_amount": 30000,
+        "payer_cash_method": "Cash"
+      },
+      "reason": "Corrected payment amount and updated payment method",
+      "changed_fields": ["payer_amount", "payer_cash_method"],
+      "created_by": "682235dbf95499dd50469312",
+      "user_email": "admin@example.com",
+      "user_name": "Admin User",
+      "created_at": "2025-05-12T14:00:00.000Z"
+    }
+  ]
+}
+```
 
 ## MongoDB Express Access
 

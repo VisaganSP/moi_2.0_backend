@@ -7,6 +7,7 @@ import { AuthenticatedRequest } from '../types';
 import { invalidateCacheByPattern } from '../utils/cacheUtils';
 import { findChangedFields, sanitizeForEditLog } from '../utils/editLogHelpers';
 import EditLog from '../models/EditLog.model';
+import { PAYER_SEARCHABLE_FIELDS } from '../utils/constants';
 
 // @desc    Create a new payer
 // @route   POST /api/payers
@@ -887,6 +888,197 @@ export const getUniquePayerWorks = asyncHandler(
     } catch (error) {
       console.error('Error fetching unique payer work types:', error);
       next(new ErrorResponse('Error fetching unique payer work types', 500));
+    }
+  }
+);
+
+// @desc    Search payers by specific field with enhanced partial matching
+// @route   GET /api/payers/search
+// @route   GET /api/functions/:functionId/payers/search
+// @access  Private
+export const searchPayers = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      // Extract function ID from params if it's a function-specific search
+      const functionId = req.params.functionId;
+      
+      // Extract query parameters with type assertions
+      const searchParam = req.query.searchParam as string;
+      const searchQuery = req.query.searchQuery as string;
+      const page = (req.query.page as string) || '1';
+      const limit = (req.query.limit as string) || '10';
+      const sortBy = (req.query.sortBy as string) || 'created_at';
+      const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
+      const searchType = (req.query.searchType as 'partial' | 'exact' | 'fuzzy' | 'startsWith' | 'endsWith') || 'partial';
+
+      // Validate required parameters
+      if (!searchParam || !searchQuery) {
+        next(new ErrorResponse('Both searchParam and searchQuery are required', 400));
+        return;
+      }
+
+      // Validate searchParam is allowed
+      if (!PAYER_SEARCHABLE_FIELDS.includes(searchParam)) {
+        next(new ErrorResponse(`Invalid searchParam. Allowed fields: ${PAYER_SEARCHABLE_FIELDS.join(', ')}`, 400));
+        return;
+      }
+
+      // Parse pagination
+      const pageNum = parseInt(page, 10) || 1;
+      const limitNum = parseInt(limit, 10) || 10;
+      const skip = (pageNum - 1) * limitNum;
+
+      // Build search query
+      let searchCondition: any = {};
+      
+      // Escape special regex characters
+      const escapeRegex = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      
+      switch (searchParam) {
+        case 'payer_amount':
+          // For numeric fields, support range search
+          const amount = parseFloat(searchQuery);
+          if (isNaN(amount)) {
+            next(new ErrorResponse('Invalid amount value', 400));
+            return;
+          }
+          // Search exact amount or within a small range
+          if (searchType === 'exact') {
+            searchCondition[searchParam] = amount;
+          } else {
+            // Search within 5% range for amounts
+            searchCondition[searchParam] = {
+              $gte: amount * 0.95,
+              $lte: amount * 1.05
+            };
+          }
+          break;
+          
+        case 'payer_phno':
+          // For phone numbers, default to startsWith
+          if (searchType === 'exact') {
+            searchCondition[searchParam] = searchQuery;
+          } else {
+            searchCondition[searchParam] = {
+              $regex: `^${escapeRegex(searchQuery)}`
+            };
+          }
+          break;
+          
+        case 'payer_cash_method':
+          // For payment methods, case-insensitive exact or partial match
+          if (searchType === 'exact') {
+            searchCondition[searchParam] = {
+              $regex: `^${escapeRegex(searchQuery)}$`,
+              $options: 'i'
+            };
+          } else {
+            searchCondition[searchParam] = {
+              $regex: escapeRegex(searchQuery),
+              $options: 'i'
+            };
+          }
+          break;
+          
+        default:
+          // For string fields (payer_name, payer_work, payer_relation, payer_city, function_id)
+          switch (searchType) {
+            case 'exact':
+              searchCondition[searchParam] = searchQuery;
+              break;
+              
+            case 'startsWith':
+              searchCondition[searchParam] = {
+                $regex: `^${escapeRegex(searchQuery)}`,
+                $options: 'i'
+              };
+              break;
+              
+            case 'endsWith':
+              searchCondition[searchParam] = {
+                $regex: `${escapeRegex(searchQuery)}$`,
+                $options: 'i'
+              };
+              break;
+              
+            case 'fuzzy':
+              // Create a fuzzy search pattern by allowing characters between each letter
+              const fuzzyPattern = searchQuery.split('').map(char => escapeRegex(char)).join('.*');
+              searchCondition[searchParam] = {
+                $regex: fuzzyPattern,
+                $options: 'i'
+              };
+              break;
+              
+            case 'partial':
+            default:
+              // Default partial search - contains anywhere
+              searchCondition[searchParam] = {
+                $regex: escapeRegex(searchQuery),
+                $options: 'i'
+              };
+              break;
+          }
+      }
+
+      // Build the complete query
+      const query: any = {
+        ...searchCondition,
+        is_deleted: false
+      };
+
+      // If searching within a specific function, add function_id to query
+      if (functionId) {
+        query.function_id = functionId;
+      }
+
+      // Build sort object
+      const sortObject: any = {};
+      sortObject[sortBy] = sortOrder === 'asc' ? 1 : -1;
+
+      // Execute search with count in parallel
+      const [payers, totalCount] = await Promise.all([
+        Payer.find(query)
+          .sort(sortObject)
+          .limit(limitNum)
+          .skip(skip)
+          .lean()
+          .exec(),
+        Payer.countDocuments(query)
+      ]);
+
+      // Calculate pagination metadata
+      const totalPages = Math.ceil(totalCount / limitNum);
+      const hasNextPage = pageNum < totalPages;
+      const hasPrevPage = pageNum > 1;
+
+      // Prepare response
+      const response = {
+        success: true,
+        data: payers,
+        pagination: {
+          currentPage: pageNum,
+          totalPages,
+          totalItems: totalCount,
+          itemsPerPage: limitNum,
+          hasNextPage,
+          hasPrevPage,
+          nextPage: hasNextPage ? pageNum + 1 : null,
+          prevPage: hasPrevPage ? pageNum - 1 : null
+        },
+        search: {
+          field: searchParam,
+          query: searchQuery,
+          type: searchType,
+          resultCount: payers.length,
+          ...(functionId && { functionId }) // Include functionId if searching within a function
+        }
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      console.error('Payer search error:', error);
+      next(new ErrorResponse('Error performing payer search', 500));
     }
   }
 );

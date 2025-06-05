@@ -56,7 +56,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"tamiluser@example.com\",\n    \"password\": \"password123\"\n  }",
+							"raw": "{\n    \"email\": \"visagan@example.com\",\n    \"password\": \"12345678\"\n  }",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -120,7 +120,7 @@
 								"header": [
 									{
 										"key": "Authorization",
-										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q"
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
 									}
 								],
 								"url": {
@@ -425,6 +425,406 @@
 					]
 				},
 				{
+					"name": "Search Endpoints",
+					"item": [
+						{
+							"name": "PartialSearch",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/search?searchParam=function_name&searchQuery=விழா",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "function_name"
+										},
+										{
+											"key": "searchQuery",
+											"value": "விழா"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "ExactMatch",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/search?searchParam=function_name&searchQuery=திருமண விழா&searchType=exact",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "function_name"
+										},
+										{
+											"key": "searchQuery",
+											"value": "திருமண விழா"
+										},
+										{
+											"key": "searchType",
+											"value": "exact"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "StartsWith",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/search?searchParam=function_name&searchQuery=திருமண&searchType=startsWith",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "function_name"
+										},
+										{
+											"key": "searchQuery",
+											"value": "திருமண"
+										},
+										{
+											"key": "searchType",
+											"value": "startsWith"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "EndsWith",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/search?searchParam=function_held_city&searchQuery=ரை&searchType=endsWith",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "function_held_city"
+										},
+										{
+											"key": "searchQuery",
+											"value": "ரை"
+										},
+										{
+											"key": "searchType",
+											"value": "endsWith"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "FuzzySearch",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/search?searchParam=function_name&searchQuery=வீட்ப்பிரசம்&searchType=fuzzy",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "function_name"
+										},
+										{
+											"key": "searchQuery",
+											"value": "வீட்ப்பிரசம்"
+										},
+										{
+											"key": "searchType",
+											"value": "fuzzy"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "PhoneNumberSearch",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/search?searchParam=function_owner_phno&searchQuery=987",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "function_owner_phno"
+										},
+										{
+											"key": "searchQuery",
+											"value": "987"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "AmountSearch",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/search?searchParam=function_amt_spent&searchQuery=500000",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "function_amt_spent"
+										},
+										{
+											"key": "searchQuery",
+											"value": "500000"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "DateSearch",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/search?searchParam=function_start_date&searchQuery=2025-06-15",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "function_start_date"
+										},
+										{
+											"key": "searchQuery",
+											"value": "2025-06-15"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "SearchWithSorting",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/search?searchParam=function_held_city&searchQuery=ர்&sortBy=function_name&sortOrder=asc",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "function_held_city"
+										},
+										{
+											"key": "searchQuery",
+											"value": "ர்"
+										},
+										{
+											"key": "sortBy",
+											"value": "function_name"
+										},
+										{
+											"key": "sortOrder",
+											"value": "asc"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "SearchWithPagination",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/search?searchParam=function_held_city&searchQuery=ர்&page=1&limit=10",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "function_held_city"
+										},
+										{
+											"key": "searchQuery",
+											"value": "ர்"
+										},
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
 					"name": "CreateFunction",
 					"request": {
 						"method": "POST",
@@ -704,6 +1104,33 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "GetFunctionDenominations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/denominations",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"functions",
+								"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+								"denominations"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -851,6 +1278,435 @@
 					]
 				},
 				{
+					"name": "Search Endpoints",
+					"item": [
+						{
+							"name": "PartialSearch",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/payers/search?searchParam=payer_city&searchQuery=ர்",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+										"payers",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "payer_city"
+										},
+										{
+											"key": "searchQuery",
+											"value": "ர்"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "ExactMatch",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/payers/search?searchParam=payer_phno&searchQuery=9800017788&searchType=exact",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+										"payers",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "payer_phno"
+										},
+										{
+											"key": "searchQuery",
+											"value": "9800017788"
+										},
+										{
+											"key": "searchType",
+											"value": "exact"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "StartsWith",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/payers/search?searchParam=payer_work&searchQuery=அழகு&searchType=startsWith",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+										"payers",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "payer_work"
+										},
+										{
+											"key": "searchQuery",
+											"value": "அழகு"
+										},
+										{
+											"key": "searchType",
+											"value": "startsWith"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "EndsWith",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/payers/search?searchParam=payer_relation&searchQuery=மகன்&searchType=endsWith",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+										"payers",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "payer_relation"
+										},
+										{
+											"key": "searchQuery",
+											"value": "மகன்"
+										},
+										{
+											"key": "searchType",
+											"value": "endsWith"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "FuzzySearch",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/payers/search?searchParam=payer_city&searchQuery=வேர்&searchType=fuzzy",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+										"payers",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "payer_city"
+										},
+										{
+											"key": "searchQuery",
+											"value": "வேர்"
+										},
+										{
+											"key": "searchType",
+											"value": "fuzzy"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "PhoneNumberSearch",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/payers/search?searchParam=payer_phno&searchQuery=9800017788&searchType=exact",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+										"payers",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "payer_phno"
+										},
+										{
+											"key": "searchQuery",
+											"value": "9800017788"
+										},
+										{
+											"key": "searchType",
+											"value": "exact"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "AmountSearch",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/payers/search?searchParam=payer_amount&searchQuery=25000&searchType=exact",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+										"payers",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "payer_amount"
+										},
+										{
+											"key": "searchQuery",
+											"value": "25000"
+										},
+										{
+											"key": "searchType",
+											"value": "exact"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "PaymentMethodSearch",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/payers/search?searchParam=payer_cash_method&searchQuery=Cash&searchType=exact",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+										"payers",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "payer_cash_method"
+										},
+										{
+											"key": "searchQuery",
+											"value": "Cash"
+										},
+										{
+											"key": "searchType",
+											"value": "exact"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "SearchWithPagination",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/payers/search?searchParam=payer_relation&searchQuery=நண்பர்&page=1&limit=50",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+										"payers",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "payer_relation"
+										},
+										{
+											"key": "searchQuery",
+											"value": "நண்பர்"
+										},
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "50"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "SearchWithSorting",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+									}
+								],
+								"url": {
+									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/payers/search?searchParam=payer_relation&searchQuery=நண்பர்&sortBy=payer_amount&sortOrder=desc",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5001",
+									"path": [
+										"api",
+										"functions",
+										"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+										"payers",
+										"search"
+									],
+									"query": [
+										{
+											"key": "searchParam",
+											"value": "payer_relation"
+										},
+										{
+											"key": "searchQuery",
+											"value": "நண்பர்"
+										},
+										{
+											"key": "sortBy",
+											"value": "payer_amount"
+										},
+										{
+											"key": "sortOrder",
+											"value": "desc"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
 					"name": "CreatePayer",
 					"request": {
 						"method": "POST",
@@ -861,12 +1717,12 @@
 							},
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0OTAxMjc3NiwiZXhwIjoxNzUxNjA0Nzc2fQ.B_yhLO6kia3uq-LTQSkqWkFq8RaBC5MS8KxLxzG_6JQ"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"function_id\": \"wedding_reception-john_doe-chennai-2025-06-15-11:00_am\",\n    \"function_name\": \"Wedding Reception\",\n    \"payer_name\": \"Rani\",\n    \"payer_phno\": \"9876543210\",\n    \"payer_work\": \"Full Stack\",\n    \"payer_given_object\": \"Cash\",\n    \"payer_cash_method\": \"Cash\",\n    \"payer_amount\": 1000,\n    \"payer_gift_name\": \"\",\n    \"payer_relation\": \"Friend\",\n    \"payer_city\": \"Madurai\",\n    \"payer_address\": \"456 Park Avenue\",\n    \"current_date\": \"2025-05-12T12:00:00.000Z\",\n    \"current_time\": \"2:00 PM\"\n  }",
+							"raw": "{\n    \"function_id\": \"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am\",\n    \"function_name\": \"திருமண_விழா\",\n    \"payer_name\": \"Rahul Kumar\",\n    \"payer_phno\": \"\",\n    \"payer_work\": \"Business\",\n    \"payer_given_object\": \"Cash\",\n    \"payer_cash_method\": \"Bank Transfer\",\n    \"payer_amount\": 25000,\n    \"payer_gift_name\": \"\",\n    \"payer_relation\": \"Friend\",\n    \"payer_city\": \"Bangalore\",\n    \"payer_address\": \"456 Park Avenue\",\n    \"current_date\": \"2025-05-12T12:00:00.000Z\",\n    \"current_time\": \"2:00 PM\",\n    \"denominations_received\": {\n      \"2000\": 10,\n      \"500\": 10\n    },\n    \"denominations_returned\": {}\n  }",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -938,7 +1794,7 @@
 							}
 						],
 						"url": {
-							"raw": "http://localhost:5001/api/payers/682dd2b3a2e63194ea9f3199",
+							"raw": "http://localhost:5001/api/payers/683fd13531be90104c2cba25",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -947,7 +1803,7 @@
 							"path": [
 								"api",
 								"payers",
-								"682dd2b3a2e63194ea9f3199"
+								"683fd13531be90104c2cba25"
 							]
 						}
 					},
@@ -964,12 +1820,12 @@
 							},
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0OTAxMjc3NiwiZXhwIjoxNzUxNjA0Nzc2fQ.B_yhLO6kia3uq-LTQSkqWkFq8RaBC5MS8KxLxzG_6JQ"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"payer_amount\": 37000,\n    \"payer_cash_method\": \"Cash\",\n    \"reason_for_edit\": \"Updated Cash and amount\"\n  }",
+							"raw": "{\n    \"payer_amount\": 30000,\n    \"payer_cash_method\": \"Cash\",\n    \"denominations_received\": {\n      \"2000\": 15\n    },\n    \"reason_for_edit\": \"Corrected payment amount and updated denominations\"\n  }",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -977,7 +1833,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:5001/api/payers/682dd2b3a2e63194ea9f3199",
+							"raw": "http://localhost:5001/api/payers/683fd13531be90104c2cba25",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -986,7 +1842,7 @@
 							"path": [
 								"api",
 								"payers",
-								"682dd2b3a2e63194ea9f3199"
+								"683fd13531be90104c2cba25"
 							]
 						}
 					},
@@ -1310,6 +2166,26 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "HealthCheck",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5001/api/health",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"api",
+						"health"
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }
