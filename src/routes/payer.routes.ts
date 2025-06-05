@@ -14,6 +14,7 @@ import {
   getUniquePayerRelations,
   getUniquePayerCities,
   getUniquePayerWorks,
+  searchPayers,
 } from '../controllers/payer.controller';
 import { protect } from '../middleware/auth.middleware';
 import { cacheMiddleware } from '../middleware/cache.middleware';
@@ -33,6 +34,9 @@ router.get('/unique/gifts', getUniquePayerGifts);
 router.get('/unique/relations', getUniquePayerRelations);
 router.get('/unique/cities', getUniquePayerCities);
 router.get('/unique/works', getUniquePayerWorks);
+
+// General payer search across all functions
+router.get('/search', searchPayers);
 
 // Standard CRUD routes
 router.route('/')
