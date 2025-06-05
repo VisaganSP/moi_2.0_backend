@@ -116,7 +116,7 @@ JWT_EXPIRE=30d
 
 ## API Endpoints
 
-![Moi Software API Structure](../server/docs/images/api_structure.png)
+![Moi Software API Structure](./docs/images/api_structure.png)
 
 ### Authentication
 
