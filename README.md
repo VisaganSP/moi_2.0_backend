@@ -23,7 +23,7 @@ A comprehensive function and payer management system built with the MERN stack (
 
 MOI Software Online is a web application designed to manage functions (events) and payers (contributors). The system tracks function details, expenses, and contributions while providing a searchable and efficient interface for managing this data.
 
-![Moi Software Backend Overview](../server/docs/images/overview.png)
+![Moi Software Backend Overview](./docs/images/overview.png)
 
 ## Features
 
