@@ -15,6 +15,9 @@ import {
   getUniquePayerCities,
   getUniquePayerWorks,
   searchPayers,
+  bulkSoftDeletePayers,
+  bulkRestorePayers,
+  bulkPermanentlyDeletePayers,
 } from '../controllers/payer.controller';
 import { protect } from '../middleware/auth.middleware';
 import { cacheMiddleware } from '../middleware/cache.middleware';
@@ -24,9 +27,6 @@ const router = express.Router({ mergeParams: true });
 // All routes require authentication
 router.use(protect);
 
-// Define specific routes BEFORE the parameterized routes
-// This ensures Express doesn't treat 'deleted' as an ID
-
 // Get deleted payers route
 router.get('/deleted', getDeletedPayers);
 router.get('/unique/names', getUniquePayerNames);
@@ -34,6 +34,10 @@ router.get('/unique/gifts', getUniquePayerGifts);
 router.get('/unique/relations', getUniquePayerRelations);
 router.get('/unique/cities', getUniquePayerCities);
 router.get('/unique/works', getUniquePayerWorks);
+
+router.post('/bulk-delete', bulkSoftDeletePayers);
+router.post('/bulk-restore', bulkRestorePayers);
+router.post('/bulk-permanent-delete', bulkPermanentlyDeletePayers);
 
 // General payer search across all functions
 router.get('/search', searchPayers);

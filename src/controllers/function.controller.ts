@@ -738,3 +738,197 @@ export const searchFunctions = asyncHandler(
     }
   }
 );
+
+// @desc    Bulk soft delete functions (Admin only)
+// @route   POST /api/functions/bulk-delete
+// @access  Private/Admin
+export const bulkDeleteFunctions = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { function_ids } = req.body;
+      
+      // Validate input
+      if (!function_ids || !Array.isArray(function_ids) || function_ids.length === 0) {
+        next(new ErrorResponse('Please provide an array of function_ids', 400));
+        return;
+      }
+
+      // Find all functions that are not already deleted
+      const functionsToDelete = await Function.find({
+        function_id: { $in: function_ids },
+        is_deleted: false
+      });
+
+      if (functionsToDelete.length === 0) {
+        next(new ErrorResponse('No valid functions found to delete', 404));
+        return;
+      }
+
+      // Prepare bulk update operations
+      const bulkOps = functionsToDelete.map(func => ({
+        updateOne: {
+          filter: { _id: func._id },
+          update: {
+            $set: {
+              is_deleted: true,
+              deleted_at: new Date()
+            }
+          }
+        }
+      }));
+
+      // Execute bulk update
+      const result = await Function.bulkWrite(bulkOps);
+
+      // Get the list of successfully deleted function_ids
+      const deletedFunctionIds = functionsToDelete.map(func => func.function_id);
+      const notFoundIds = function_ids.filter(id => !deletedFunctionIds.includes(id));
+
+      // Invalidate cache for all affected functions
+      await invalidateCacheByPattern('api:/functions*');
+      for (const functionId of deletedFunctionIds) {
+        await invalidateCacheByPattern(`api:/functions/${functionId}`);
+      }
+
+      res.status(200).json({
+        success: true,
+        data: {
+          deleted: deletedFunctionIds,
+          notFound: notFoundIds,
+          deletedCount: result.modifiedCount
+        }
+      });
+    } catch (error) {
+      console.error('Error in bulk delete:', error);
+      next(new ErrorResponse('Failed to bulk delete functions', 500));
+    }
+  }
+);
+
+// @desc    Bulk restore deleted functions (Admin only)
+// @route   POST /api/functions/bulk-restore
+// @access  Private/Admin
+export const bulkRestoreFunctions = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { function_ids } = req.body;
+      
+      // Validate input
+      if (!function_ids || !Array.isArray(function_ids) || function_ids.length === 0) {
+        next(new ErrorResponse('Please provide an array of function_ids', 400));
+        return;
+      }
+
+      // Find all functions that are deleted
+      const functionsToRestore = await Function.find({
+        function_id: { $in: function_ids },
+        is_deleted: true
+      });
+
+      if (functionsToRestore.length === 0) {
+        next(new ErrorResponse('No deleted functions found to restore', 404));
+        return;
+      }
+
+      // Prepare bulk update operations
+      const bulkOps = functionsToRestore.map(func => ({
+        updateOne: {
+          filter: { _id: func._id },
+          update: {
+            $set: {
+              is_deleted: false
+            },
+            $unset: {
+              deleted_at: ""
+            }
+          }
+        }
+      }));
+
+      // Execute bulk update
+      const result = await Function.bulkWrite(bulkOps);
+
+      // Get the list of successfully restored function_ids
+      const restoredFunctionIds = functionsToRestore.map(func => func.function_id);
+      const notFoundIds = function_ids.filter(id => !restoredFunctionIds.includes(id));
+
+      // Invalidate cache for all affected functions
+      await invalidateCacheByPattern('api:/functions*');
+      for (const functionId of restoredFunctionIds) {
+        await invalidateCacheByPattern(`api:/functions/${functionId}`);
+      }
+
+      res.status(200).json({
+        success: true,
+        data: {
+          restored: restoredFunctionIds,
+          notFound: notFoundIds,
+          restoredCount: result.modifiedCount
+        }
+      });
+    } catch (error) {
+      console.error('Error in bulk restore:', error);
+      next(new ErrorResponse('Failed to bulk restore functions', 500));
+    }
+  }
+);
+
+// @desc    Bulk permanently delete functions (Admin only)
+// @route   POST /api/functions/bulk-permanent-delete
+// @access  Private/Admin
+export const bulkPermanentlyDeleteFunctions = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { function_ids } = req.body;
+      
+      // Validate input
+      if (!function_ids || !Array.isArray(function_ids) || function_ids.length === 0) {
+        next(new ErrorResponse('Please provide an array of function_ids', 400));
+        return;
+      }
+
+      // Find all functions that are soft-deleted
+      const functionsToDelete = await Function.find({
+        function_id: { $in: function_ids },
+        is_deleted: true
+      });
+
+      if (functionsToDelete.length === 0) {
+        next(new ErrorResponse('No soft-deleted functions found to permanently delete', 404));
+        return;
+      }
+
+      // Get the MongoDB _ids and function_ids for deletion
+      const mongoIds = functionsToDelete.map(func => func._id);
+      const deletedFunctionIds = functionsToDelete.map(func => func.function_id);
+      const notFoundIds = function_ids.filter(id => !deletedFunctionIds.includes(id));
+
+      // Permanently delete the functions
+      const result = await Function.deleteMany({
+        _id: { $in: mongoIds }
+      });
+
+      // Also delete associated payers if needed (optional - depends on business logic)
+      // await Payer.deleteMany({ function_id: { $in: deletedFunctionIds } });
+
+      // Invalidate cache for all affected functions
+      await invalidateCacheByPattern('api:/functions*');
+      for (const functionId of deletedFunctionIds) {
+        await invalidateCacheByPattern(`api:/functions/${functionId}`);
+      }
+
+      res.status(200).json({
+        success: true,
+        data: {
+          permanentlyDeleted: deletedFunctionIds,
+          notFoundOrNotSoftDeleted: notFoundIds,
+          deletedCount: result.deletedCount
+        },
+        message: 'Functions permanently deleted'
+      });
+    } catch (error) {
+      console.error('Error in bulk permanent delete:', error);
+      next(new ErrorResponse('Failed to bulk permanently delete functions', 500));
+    }
+  }
+);

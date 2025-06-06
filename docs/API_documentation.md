@@ -20,6 +20,9 @@ This document provides comprehensive information about the MOI Software Online A
   - [Get Functions by Date Range](#get-functions-by-date-range)
   - [Delete Function Permanently](#permanently-delete-function)
   - [Get Function Denominations](#get-function-denominations)
+  - [Bulk Soft Delete Functions](#bulk-soft-delete-functions)
+  - [Bulk Restore Functions](#bulk-restore-functions)
+  - [Bulk Permanently Delete Functions](#bulk-permanently-delete-functions)
 - [Function Search Endpoints](#function-search-endpoints)
   - [Base Search Endpoint](#base-search-endpoint)
   - [Query Parameters](#query-parameters)
@@ -58,6 +61,9 @@ This document provides comprehensive information about the MOI Software Online A
   - [Get Unique Payer Relations](#get-unique-payer-relations)
   - [Get Unique Payer Cities](#get-unique-payer-cities)
   - [Get Unique Payer Work Types](#get-unique-payer-work-types)
+  - [Bulk Soft Delete Payers](#bulk-soft-delete-payers)
+  - [Bulk Restore Payers](#bulk-restore-payers)
+  - [Bulk Permanently Delete Payers](#bulk-permanently-delete-payers)
 - [Payer Search Endpoints](#payer-search-endpoints)
   - [Base Search Endpoints](#base-search-endpoints)
   - [Query Parameters](#query-parameters-1)
@@ -810,6 +816,183 @@ curl -X GET http://localhost:5001/api/functions/683246abcd1234567890/denominatio
 - `total_in_hand` represents the actual cash amount based on denomination counts
 - `cash_out_pay` and `special_handler_pay` are placeholder fields for future use
 - The response includes a timestamp for tracking when the summary was generated
+
+### Bulk Soft Delete Functions
+
+Soft-deletes multiple functions at once. Admin only.
+
+- **URL**: `/functions/bulk-delete`
+- **Method**: `POST`
+- **Auth Required**: Yes (JWT Token with Admin privileges)
+- **Content Type**: `application/json`
+
+**Request Body**:
+
+```json
+{
+  "function_ids": [
+    "wedding-reception-john_doe-chennai-2025-06-15-10_00_am",
+    "birthday-party-jane_smith-mumbai-2025-07-20-6_00_pm",
+    "anniversary-celebration-kumar_family-delhi-2025-08-10-7_00_pm"
+  ]
+}
+```
+
+**Example Request**:
+
+```bash
+curl -X POST http://localhost:5001/api/functions/bulk-delete \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -d '{
+    "function_ids": [
+      "wedding-reception-john_doe-chennai-2025-06-15-10_00_am",
+      "birthday-party-jane_smith-mumbai-2025-07-20-6_00_pm"
+    ]
+  }'
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "deleted": [
+      "wedding-reception-john_doe-chennai-2025-06-15-10_00_am",
+      "birthday-party-jane_smith-mumbai-2025-07-20-6_00_pm"
+    ],
+    "notFound": [],
+    "deletedCount": 2
+  }
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Please provide an array of function_ids"
+}
+```
+
+### Bulk Restore Functions
+
+Restores multiple soft-deleted functions at once. Admin only.
+
+- **URL**: `/functions/bulk-restore`
+- **Method**: `POST`
+- **Auth Required**: Yes (JWT Token with Admin privileges)
+- **Content Type**: `application/json`
+
+**Request Body**:
+
+```json
+{
+  "function_ids": [
+    "wedding-reception-john_doe-chennai-2025-06-15-10_00_am",
+    "birthday-party-jane_smith-mumbai-2025-07-20-6_00_pm"
+  ]
+}
+```
+
+**Example Request**:
+
+```bash
+curl -X POST http://localhost:5001/api/functions/bulk-restore \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -d '{
+    "function_ids": [
+      "wedding-reception-john_doe-chennai-2025-06-15-10_00_am",
+      "birthday-party-jane_smith-mumbai-2025-07-20-6_00_pm"
+    ]
+  }'
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "restored": [
+      "wedding-reception-john_doe-chennai-2025-06-15-10_00_am",
+      "birthday-party-jane_smith-mumbai-2025-07-20-6_00_pm"
+    ],
+    "notFound": [],
+    "restoredCount": 2
+  }
+}
+```
+
+### Bulk Permanently Delete Functions
+
+Permanently deletes multiple soft-deleted functions from the database. This action cannot be undone. Admin only.
+
+- **URL**: `/functions/bulk-permanent-delete`
+- **Method**: `POST`
+- **Auth Required**: Yes (JWT Token with Admin privileges)
+- **Content Type**: `application/json`
+
+**Request Body**:
+
+```json
+{
+  "function_ids": [
+    "wedding-reception-john_doe-chennai-2025-06-15-10_00_am",
+    "birthday-party-jane_smith-mumbai-2025-07-20-6_00_pm"
+  ]
+}
+```
+
+**Example Request**:
+
+```bash
+curl -X POST http://localhost:5001/api/functions/bulk-permanent-delete \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -d '{
+    "function_ids": [
+      "wedding-reception-john_doe-chennai-2025-06-15-10_00_am",
+      "birthday-party-jane_smith-mumbai-2025-07-20-6_00_pm"
+    ]
+  }'
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "permanentlyDeleted": [
+      "wedding-reception-john_doe-chennai-2025-06-15-10_00_am",
+      "birthday-party-jane_smith-mumbai-2025-07-20-6_00_pm"
+    ],
+    "notFoundOrNotSoftDeleted": [],
+    "deletedCount": 2
+  },
+  "message": "Functions permanently deleted"
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "No soft-deleted functions found to permanently delete"
+}
+```
+
+**Notes**:
+- All bulk operations require admin privileges
+- The operations are atomic - either all succeed or all fail for each function
+- Functions must be soft-deleted before they can be permanently deleted
+- Cache is automatically invalidated for all affected functions
+- The response includes arrays showing which operations succeeded and which function_ids were not found
 
 ## Function Search Endpoints
 
@@ -1820,6 +2003,184 @@ curl -X GET http://localhost:5001/api/payers/unique/works \
   "error": "Error fetching unique payer work types"
 }
 ```
+
+### Bulk Soft Delete Payers
+
+Soft-deletes multiple payers at once.
+
+- **URL**: `/payers/bulk-delete`
+- **Method**: `POST`
+- **Auth Required**: Yes (JWT Token)
+- **Content Type**: `application/json`
+
+**Request Body**:
+
+```json
+{
+  "payer_ids": [
+    "683247efgh5678901234",
+    "683247efgh5678901235",
+    "683247efgh5678901236"
+  ]
+}
+```
+
+**Example Request**:
+
+```bash
+curl -X POST http://localhost:5001/api/payers/bulk-delete \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "payer_ids": [
+      "683247efgh5678901234",
+      "683247efgh5678901235"
+    ]
+  }'
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "deleted": [
+      "683247efgh5678901234",
+      "683247efgh5678901235"
+    ],
+    "notFound": [],
+    "deletedCount": 2
+  }
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Please provide an array of payer_ids"
+}
+```
+
+### Bulk Restore Payers
+
+Restores multiple soft-deleted payers at once.
+
+- **URL**: `/payers/bulk-restore`
+- **Method**: `POST`
+- **Auth Required**: Yes (JWT Token)
+- **Content Type**: `application/json`
+
+**Request Body**:
+
+```json
+{
+  "payer_ids": [
+    "683247efgh5678901234",
+    "683247efgh5678901235"
+  ]
+}
+```
+
+**Example Request**:
+
+```bash
+curl -X POST http://localhost:5001/api/payers/bulk-restore \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "payer_ids": [
+      "683247efgh5678901234",
+      "683247efgh5678901235"
+    ]
+  }'
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "restored": [
+      "683247efgh5678901234",
+      "683247efgh5678901235"
+    ],
+    "notFound": [],
+    "restoredCount": 2
+  }
+}
+```
+
+### Bulk Permanently Delete Payers
+
+Permanently deletes multiple soft-deleted payers from the database. This action cannot be undone.
+
+- **URL**: `/payers/bulk-permanent-delete`
+- **Method**: `POST`
+- **Auth Required**: Yes (JWT Token)
+- **Content Type**: `application/json`
+
+**Request Body**:
+
+```json
+{
+  "payer_ids": [
+    "683247efgh5678901234",
+    "683247efgh5678901235"
+  ]
+}
+```
+
+**Example Request**:
+
+```bash
+curl -X POST http://localhost:5001/api/payers/bulk-permanent-delete \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "payer_ids": [
+      "683247efgh5678901234",
+      "683247efgh5678901235"
+    ]
+  }'
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "permanentlyDeleted": [
+      "683247efgh5678901234",
+      "683247efgh5678901235"
+    ],
+    "notFoundOrNotSoftDeleted": [],
+    "deletedCount": 2
+  },
+  "message": "Payers permanently deleted"
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "No soft-deleted payers found to permanently delete"
+}
+```
+
+**Notes**:
+- All bulk operations require authentication
+- The operations process each payer individually to provide detailed feedback
+- Payers must be soft-deleted before they can be permanently deleted
+- Cache is automatically invalidated for all affected functions and payers
+- The response includes arrays showing which operations succeeded and which payer IDs were not found
+- For permanent deletion, admin privileges may be required (uncomment the admin check in the code if needed)
 
 ## Payer Search Endpoints
 

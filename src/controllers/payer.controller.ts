@@ -1082,3 +1082,262 @@ export const searchPayers = asyncHandler(
     }
   }
 );
+
+// @desc    Bulk soft delete payers
+// @route   POST /api/payers/bulk-delete
+// @access  Private
+export const bulkSoftDeletePayers = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      // Check if user exists
+      if (!req.user) {
+        next(new ErrorResponse('User not found', 401));
+        return;
+      }
+
+      // Extract payer IDs from request body
+      const { payer_ids } = req.body;
+
+      // Validate input
+      if (!payer_ids || !Array.isArray(payer_ids) || payer_ids.length === 0) {
+        next(new ErrorResponse('Please provide an array of payer_ids', 400));
+        return;
+      }
+
+      console.log(`Attempting to soft delete ${payer_ids.length} payers`);
+
+      // Arrays to track results
+      const deleted: string[] = [];
+      const notFound: string[] = [];
+      const functionIdsToInvalidate = new Set<string>();
+
+      // Process each payer ID
+      for (const payerId of payer_ids) {
+        try {
+          const payer = await Payer.findOne({
+            _id: payerId,
+            is_deleted: false
+          });
+
+          if (payer) {
+            // Soft delete the payer
+            payer.is_deleted = true;
+            payer.deleted_at = new Date();
+            await payer.save();
+            
+            deleted.push(payerId);
+            functionIdsToInvalidate.add(payer.function_id);
+            console.log(`Successfully soft deleted payer: ${payerId}`);
+          } else {
+            notFound.push(payerId);
+            console.log(`Payer not found or already deleted: ${payerId}`);
+          }
+        } catch (error) {
+          console.error(`Error processing payer ${payerId}:`, error);
+          notFound.push(payerId);
+        }
+      }
+
+      // Invalidate cache for all affected functions
+      await invalidateCacheByPattern('api:/payers*');
+      for (const functionId of functionIdsToInvalidate) {
+        await invalidateCacheByPattern(`api:/functions/${functionId}/payers*`);
+        await invalidateCacheByPattern(`api:/functions/${functionId}/denominations*`);
+      }
+
+      console.log(`Bulk soft delete completed: ${deleted.length} deleted, ${notFound.length} not found`);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          deleted,
+          notFound,
+          deletedCount: deleted.length
+        }
+      });
+    } catch (error) {
+      console.error('Bulk soft delete error:', error);
+      next(new ErrorResponse('Error performing bulk soft delete', 500));
+    }
+  }
+);
+
+// @desc    Bulk restore soft-deleted payers
+// @route   POST /api/payers/bulk-restore
+// @access  Private
+export const bulkRestorePayers = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      // Check if user exists
+      if (!req.user) {
+        next(new ErrorResponse('User not found', 401));
+        return;
+      }
+
+      // Extract payer IDs from request body
+      const { payer_ids } = req.body;
+
+      // Validate input
+      if (!payer_ids || !Array.isArray(payer_ids) || payer_ids.length === 0) {
+        next(new ErrorResponse('Please provide an array of payer_ids', 400));
+        return;
+      }
+
+      console.log(`Attempting to restore ${payer_ids.length} payers`);
+
+      // Arrays to track results
+      const restored: string[] = [];
+      const notFound: string[] = [];
+      const functionIdsToInvalidate = new Set<string>();
+
+      // Process each payer ID
+      for (const payerId of payer_ids) {
+        try {
+          const payer = await Payer.findOne({
+            _id: payerId,
+            is_deleted: true
+          });
+
+          if (payer) {
+            // Restore the payer
+            payer.is_deleted = false;
+            payer.deleted_at = undefined;
+            await payer.save();
+            
+            restored.push(payerId);
+            functionIdsToInvalidate.add(payer.function_id);
+            console.log(`Successfully restored payer: ${payerId}`);
+          } else {
+            notFound.push(payerId);
+            console.log(`Payer not found or not deleted: ${payerId}`);
+          }
+        } catch (error) {
+          console.error(`Error processing payer ${payerId}:`, error);
+          notFound.push(payerId);
+        }
+      }
+
+      // Invalidate cache for all affected functions
+      await invalidateCacheByPattern('api:/payers*');
+      for (const functionId of functionIdsToInvalidate) {
+        await invalidateCacheByPattern(`api:/functions/${functionId}/payers*`);
+        await invalidateCacheByPattern(`api:/functions/${functionId}/denominations*`);
+      }
+
+      console.log(`Bulk restore completed: ${restored.length} restored, ${notFound.length} not found`);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          restored,
+          notFound,
+          restoredCount: restored.length
+        }
+      });
+    } catch (error) {
+      console.error('Bulk restore error:', error);
+      next(new ErrorResponse('Error performing bulk restore', 500));
+    }
+  }
+);
+
+// @desc    Bulk permanently delete soft-deleted payers
+// @route   POST /api/payers/bulk-permanent-delete
+// @access  Private (Admin only)
+export const bulkPermanentlyDeletePayers = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      // Check if user exists and is admin
+      if (!req.user) {
+        next(new ErrorResponse('User not found', 401));
+        return;
+      }
+
+      // Extract payer IDs from request body
+      const { payer_ids } = req.body;
+
+      // Validate input
+      if (!payer_ids || !Array.isArray(payer_ids) || payer_ids.length === 0) {
+        next(new ErrorResponse('Please provide an array of payer_ids', 400));
+        return;
+      }
+
+      console.log(`Attempting to permanently delete ${payer_ids.length} payers`);
+
+      // Arrays to track results
+      const permanentlyDeleted: string[] = [];
+      const notFoundOrNotSoftDeleted: string[] = [];
+      const functionIdsToInvalidate = new Set<string>();
+
+      // First, verify all payers exist and are soft-deleted
+      for (const payerId of payer_ids) {
+        try {
+          const payer = await Payer.findOne({
+            _id: payerId,
+            is_deleted: true
+          });
+
+          if (!payer) {
+            notFoundOrNotSoftDeleted.push(payerId);
+            console.log(`Payer not found or not soft-deleted: ${payerId}`);
+          } else {
+            // Store function ID for cache invalidation
+            functionIdsToInvalidate.add(payer.function_id);
+          }
+        } catch (error) {
+          console.error(`Error checking payer ${payerId}:`, error);
+          notFoundOrNotSoftDeleted.push(payerId);
+        }
+      }
+
+      // Only proceed with deletion if we have valid payers to delete
+      if (payer_ids.length > notFoundOrNotSoftDeleted.length) {
+        // Perform bulk deletion for valid soft-deleted payers
+        const deleteResult = await Payer.deleteMany({
+          _id: { $in: payer_ids },
+          is_deleted: true
+        });
+
+        // Track successfully deleted payers
+        const deletedCount = deleteResult.deletedCount || 0;
+        
+        // Determine which IDs were successfully deleted
+        for (const payerId of payer_ids) {
+          if (!notFoundOrNotSoftDeleted.includes(payerId)) {
+            permanentlyDeleted.push(payerId);
+          }
+        }
+
+        console.log(`Permanently deleted ${deletedCount} payers`);
+      }
+
+      // Invalidate cache for all affected functions
+      await invalidateCacheByPattern('api:/payers*');
+      for (const functionId of functionIdsToInvalidate) {
+        await invalidateCacheByPattern(`api:/functions/${functionId}/payers*`);
+        await invalidateCacheByPattern(`api:/functions/${functionId}/denominations*`);
+      }
+
+      console.log(`Bulk permanent delete completed: ${permanentlyDeleted.length} deleted, ${notFoundOrNotSoftDeleted.length} not found or not soft-deleted`);
+
+      // Check if any payers were deleted
+      if (permanentlyDeleted.length === 0) {
+        next(new ErrorResponse('No soft-deleted payers found to permanently delete', 400));
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: {
+          permanentlyDeleted,
+          notFoundOrNotSoftDeleted,
+          deletedCount: permanentlyDeleted.length
+        },
+        message: 'Payers permanently deleted'
+      });
+    } catch (error) {
+      console.error('Bulk permanent delete error:', error);
+      next(new ErrorResponse('Error performing bulk permanent delete', 500));
+    }
+  }
+);
