@@ -1131,6 +1131,123 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "BulkSoftDeleteFunctions",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"function_ids\": [\n        \"wedding_reception-john_doe-chennai-2025-06-15-10:00_am\",\n        \"wedding-visagan-chennai-2025-06-15-10:00_am\",\n        \"baby_shower-visagan-chennai-2025-06-15-10:00_am\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5001/api/functions/bulk-delete",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"functions",
+								"bulk-delete"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "BulkRestoreFunctions",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"function_ids\": [\n        \"wedding_reception-john_doe-chennai-2025-06-15-10:00_am\",\n        \"wedding-visagan-chennai-2025-06-15-10:00_am\",\n        \"baby_shower-visagan-chennai-2025-06-15-10:00_am\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5001/api/functions/bulk-restore",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"functions",
+								"bulk-restore"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "BulkPermanentlyDeleteFunctions",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"function_ids\": [\n        \"wedding_reception-john_doe-chennai-2025-06-15-10:00_am\",\n        \"wedding-visagan-chennai-2025-06-15-10:00_am\",\n        \"baby_shower-visagan-chennai-2025-06-15-10:00_am\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5001/api/functions/bulk-permanent-delete",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"functions",
+								"bulk-permanent-delete"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -1755,7 +1872,7 @@
 							}
 						],
 						"url": {
-							"raw": "http://localhost:5001/api/payers?function_id=திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am&page=1&limit=100",
+							"raw": "http://localhost:5001/api/payers?function_id=குழந்தை_பிறந்தநாள்_விழா-செல்வராஜ்_கண்ணன்-கோயம்புத்தூர்-2025-07-25-5:00_pm&page=1&limit=100",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -1768,7 +1885,7 @@
 							"query": [
 								{
 									"key": "function_id",
-									"value": "திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am"
+									"value": "குழந்தை_பிறந்தநாள்_விழா-செல்வராஜ்_கண்ணன்-கோயம்புத்தூர்-2025-07-25-5:00_pm"
 								},
 								{
 									"key": "page",
@@ -1881,7 +1998,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZjRhNWY2MWI0NDFiODZjMmEwZSIsImlhdCI6MTc0NzgzMjY1MCwiZXhwIjoxNzUwNDI0NjUwfQ.kKL0VSpOA0hQZI48qwghw-KfNqF4VitXP8CjN7Qc-kA"
 							}
 						],
 						"url": {
@@ -2040,6 +2157,123 @@
 								"payers",
 								"phone",
 								"9876543212"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "BulkSoftDeletePayers",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZjRhNWY2MWI0NDFiODZjMmEwZSIsImlhdCI6MTc0NzgzMjY1MCwiZXhwIjoxNzUwNDI0NjUwfQ.kKL0VSpOA0hQZI48qwghw-KfNqF4VitXP8CjN7Qc-kA"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"payer_ids\": [\n        \"682dce375d3e0083d373b084\",\n        \"682dce375d3e0083d373b085\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5001/api/payers/bulk-delete",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"payers",
+								"bulk-delete"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "BulkRestorePayers",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZjRhNWY2MWI0NDFiODZjMmEwZSIsImlhdCI6MTc0NzgzMjY1MCwiZXhwIjoxNzUwNDI0NjUwfQ.kKL0VSpOA0hQZI48qwghw-KfNqF4VitXP8CjN7Qc-kA"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"payer_ids\": [\n        \"682dce375d3e0083d373b084\",\n        \"682dce375d3e0083d373b085\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5001/api/payers/bulk-restore",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"payers",
+								"bulk-restore"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "BulkPermanentlyDeletePayers",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZjRhNWY2MWI0NDFiODZjMmEwZSIsImlhdCI6MTc0NzgzMjY1MCwiZXhwIjoxNzUwNDI0NjUwfQ.kKL0VSpOA0hQZI48qwghw-KfNqF4VitXP8CjN7Qc-kA"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"payer_ids\": [\n        \"682dce375d3e0083d373b084\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5001/api/payers/bulk-permanent-delete",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"payers",
+								"bulk-permanent-delete"
 							]
 						}
 					},

@@ -10,7 +10,10 @@ import {
   getFunctionsByDateRange,
   permanentlyDeleteFunction,
   getFunctionDenominations,
-  searchFunctions
+  searchFunctions,
+  bulkDeleteFunctions,
+  bulkPermanentlyDeleteFunctions,
+  bulkRestoreFunctions
 } from '../controllers/function.controller';
 import { getPayersByFunction, getTotalPaymentByFunction, searchPayers } from '../controllers/payer.controller';
 import { protect, admin } from '../middleware/auth.middleware';
@@ -35,6 +38,10 @@ router.use(protect);
 router.get('/deleted', admin, getDeletedFunctions);  // Admin only
 router.get('/search', admin, searchFunctions);
 router.get('/date-range', getFunctionsByDateRange);  // All authenticated users
+
+router.post('/bulk-delete', admin, bulkDeleteFunctions);  // Admin only
+router.post('/bulk-restore', admin, bulkRestoreFunctions);  // Admin only
+router.post('/bulk-permanent-delete', admin, bulkPermanentlyDeleteFunctions);  // Admin only
 
 router.route('/')
   .post(admin, createFunction)  // Admin only

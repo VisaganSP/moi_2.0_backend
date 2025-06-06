@@ -136,6 +136,9 @@ JWT_EXPIRE=30d
 - **Get Functions by Date Range**: `GET /api/functions/date-range`
 - **Permanently Delete Function**: `DELETE /api/functions/:functionId/permanent`
 - **Get Function Denominations**: `GET /api/functions/:functionId/denominations`
+- **Bulk Soft Delete Functions**: `POST /api/functions/bulk-delete`
+- **Bulk Restore Functions**: `POST /api/functions/bulk-restore`
+- **Bulk Permanently Delete Functions**: `POST /api/functions/bulk-permanent-delete`
 
 ### Function Search
 
@@ -159,6 +162,9 @@ JWT_EXPIRE=30d
 - **Get Unique Payer Relations**: `GET /api/payers/unique/relations`
 - **Get Unique Payer Cities**: `GET /api/payers/unique/cities`
 - **Get Unique Payer Work Types**: `GET /api/payers/unique/works`
+- **Bulk Soft Delete Payers**: `POST /api/payers/bulk-delete`
+- **Bulk Restore Payers**: `POST /api/payers/bulk-restore`
+- **Bulk Permanently Delete Payers**: `POST /api/payers/bulk-permanent-delete`
 
 ### Payer Search
 
