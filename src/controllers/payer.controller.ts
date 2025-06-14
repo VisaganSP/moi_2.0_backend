@@ -23,62 +23,79 @@ export const createPayer = asyncHandler(
     // Add user id to request body
     req.body.created_by = req.user._id;
 
-    // Check if payer with the same phone number already exists, but only if phone number is provided
+    // Check if payer with the same phone number already exists IN THE SAME FUNCTION
     if (req.body.payer_phno && req.body.payer_phno.trim() !== '') {
-      const existingPayer = await Payer.findOne({ payer_phno: req.body.payer_phno });
+      const existingPayer = await Payer.findOne({ 
+        payer_phno: req.body.payer_phno,
+        function_id: req.body.function_id,
+        is_deleted: false // Only consider non-deleted payers
+      });
+      
       if (existingPayer) {
-        next(new ErrorResponse('Payer with this phone number already exists', 400));
+        next(new ErrorResponse('Payer with this phone number already exists in this function', 400));
         return;
       }
     }
 
     // Handle denomination calculations for cash payments
     if (req.body.payer_given_object === 'Cash') {
-      try {
-        // Calculate total received
-        const denomsReceived = req.body.denominations_received || {};
-        const totalReceived = 
-          (denomsReceived['2000'] || 0) * 2000 +
-          (denomsReceived['500'] || 0) * 500 +
-          (denomsReceived['200'] || 0) * 200 +
-          (denomsReceived['100'] || 0) * 100 +
-          (denomsReceived['50'] || 0) * 50 +
-          (denomsReceived['20'] || 0) * 20 +
-          (denomsReceived['10'] || 0) * 10 +
-          (denomsReceived['5'] || 0) * 5 +
-          (denomsReceived['2'] || 0) * 2 +
-          (denomsReceived['1'] || 0) * 1;
-        
-        // Calculate total returned
-        const denomsReturned = req.body.denominations_returned || {};
-        const totalReturned = 
-          (denomsReturned['2000'] || 0) * 2000 +
-          (denomsReturned['500'] || 0) * 500 +
-          (denomsReturned['200'] || 0) * 200 +
-          (denomsReturned['100'] || 0) * 100 +
-          (denomsReturned['50'] || 0) * 50 +
-          (denomsReturned['20'] || 0) * 20 +
-          (denomsReturned['10'] || 0) * 10 +
-          (denomsReturned['5'] || 0) * 5 +
-          (denomsReturned['2'] || 0) * 2 +
-          (denomsReturned['1'] || 0) * 1;
-        
-        // Set the calculated values
-        req.body.total_received = totalReceived;
-        req.body.total_returned = totalReturned;
-        req.body.net_amount = totalReceived - totalReturned;
-        
-        // Validate that net_amount matches payer_amount if payer_amount is provided
-        if (req.body.payer_amount !== undefined && 
-            req.body.payer_amount !== null && 
-            req.body.net_amount !== req.body.payer_amount) {
-          next(new ErrorResponse('Net amount from denominations does not match payer amount', 400));
+      // Check if denominations are provided
+      const hasDenominations = req.body.denominations_received || req.body.denominations_returned;
+      
+      if (hasDenominations) {
+        try {
+          // Calculate total received
+          const denomsReceived = req.body.denominations_received || {};
+          const totalReceived = 
+            (denomsReceived['2000'] || 0) * 2000 +
+            (denomsReceived['500'] || 0) * 500 +
+            (denomsReceived['200'] || 0) * 200 +
+            (denomsReceived['100'] || 0) * 100 +
+            (denomsReceived['50'] || 0) * 50 +
+            (denomsReceived['20'] || 0) * 20 +
+            (denomsReceived['10'] || 0) * 10 +
+            (denomsReceived['5'] || 0) * 5 +
+            (denomsReceived['2'] || 0) * 2 +
+            (denomsReceived['1'] || 0) * 1;
+          
+          // Calculate total returned
+          const denomsReturned = req.body.denominations_returned || {};
+          const totalReturned = 
+            (denomsReturned['2000'] || 0) * 2000 +
+            (denomsReturned['500'] || 0) * 500 +
+            (denomsReturned['200'] || 0) * 200 +
+            (denomsReturned['100'] || 0) * 100 +
+            (denomsReturned['50'] || 0) * 50 +
+            (denomsReturned['20'] || 0) * 20 +
+            (denomsReturned['10'] || 0) * 10 +
+            (denomsReturned['5'] || 0) * 5 +
+            (denomsReturned['2'] || 0) * 2 +
+            (denomsReturned['1'] || 0) * 1;
+          
+          // Set the calculated values
+          req.body.total_received = totalReceived;
+          req.body.total_returned = totalReturned;
+          req.body.net_amount = totalReceived - totalReturned;
+          
+          // Validate that net_amount matches payer_amount if payer_amount is provided
+          if (req.body.payer_amount !== undefined && 
+              req.body.payer_amount !== null && 
+              req.body.net_amount !== req.body.payer_amount) {
+            next(new ErrorResponse('Net amount from denominations does not match payer amount', 400));
+            return;
+          }
+        } catch (error) {
+          console.error('Error calculating denomination totals:', error);
+          next(new ErrorResponse('Error processing denomination data', 400));
           return;
         }
-      } catch (error) {
-        console.error('Error calculating denomination totals:', error);
-        next(new ErrorResponse('Error processing denomination data', 400));
-        return;
+      } else {
+        // If no denominations provided, use payer_amount directly
+        if (req.body.payer_amount !== undefined && req.body.payer_amount !== null) {
+          req.body.net_amount = req.body.payer_amount;
+          req.body.total_received = req.body.payer_amount;
+          req.body.total_returned = 0;
+        }
       }
     }
 
@@ -96,7 +113,6 @@ export const createPayer = asyncHandler(
     });
   }
 );
-
 // @desc    Get all payers
 // @route   GET /api/payers
 // @access  Private
@@ -243,55 +259,105 @@ export const updatePayer = asyncHandler(
       }
 
       // Handle denomination calculations for cash payments
-      if (payer.payer_given_object === 'Cash' && 
-          (updateData.denominations_received || updateData.denominations_returned)) {
-        try {
-          const denomsReceived = updateData.denominations_received || payer.denominations_received || {};
-          const totalReceived = 
-            (denomsReceived['2000'] || 0) * 2000 +
-            (denomsReceived['500'] || 0) * 500 +
-            (denomsReceived['200'] || 0) * 200 +
-            (denomsReceived['100'] || 0) * 100 +
-            (denomsReceived['50'] || 0) * 50 +
-            (denomsReceived['20'] || 0) * 20 +
-            (denomsReceived['10'] || 0) * 10 +
-            (denomsReceived['5'] || 0) * 5 +
-            (denomsReceived['2'] || 0) * 2 +
-            (denomsReceived['1'] || 0) * 1;
-          
-          const denomsReturned = updateData.denominations_returned || payer.denominations_returned || {};
-          const totalReturned = 
-            (denomsReturned['2000'] || 0) * 2000 +
-            (denomsReturned['500'] || 0) * 500 +
-            (denomsReturned['200'] || 0) * 200 +
-            (denomsReturned['100'] || 0) * 100 +
-            (denomsReturned['50'] || 0) * 50 +
-            (denomsReturned['20'] || 0) * 20 +
-            (denomsReturned['10'] || 0) * 10 +
-            (denomsReturned['5'] || 0) * 5 +
-            (denomsReturned['2'] || 0) * 2 +
-            (denomsReturned['1'] || 0) * 1;
-          
-          // Set the calculated values
-          updateData.total_received = totalReceived;
-          updateData.total_returned = totalReturned;
-          updateData.net_amount = totalReceived - totalReturned;
-          
-          // Validate that net_amount matches payer_amount if payer_amount is being updated
-          const newAmount = updateData.payer_amount !== undefined ? 
-                            updateData.payer_amount : 
-                            payer.payer_amount;
-                            
-          if (newAmount !== undefined && 
-              newAmount !== null && 
-              updateData.net_amount !== newAmount) {
-            next(new ErrorResponse('Net amount from denominations does not match payer amount', 400));
+      if (payer!.payer_given_object === 'Cash') {
+        // Check if denominations are actually provided with real values
+        const hasReceivedDenoms = updateData.denominations_received && 
+          Object.keys(updateData.denominations_received).length > 0 &&
+          Object.values(updateData.denominations_received).some((val: any) => Number(val) > 0);
+        
+        const hasReturnedDenoms = updateData.denominations_returned && 
+          Object.keys(updateData.denominations_returned).length > 0 &&
+          Object.values(updateData.denominations_returned).some((val: any) => Number(val) > 0);
+        
+        const hasDenominations = hasReceivedDenoms || hasReturnedDenoms;
+        
+        if (hasDenominations) {
+          try {
+            // Use updated denominations if provided, otherwise keep existing
+            const denomsReceived = hasReceivedDenoms ? 
+              updateData.denominations_received : 
+              (payer!.denominations_received || {});
+            
+            const denomsReturned = hasReturnedDenoms ? 
+              updateData.denominations_returned : 
+              (payer!.denominations_returned || {});
+            
+            const totalReceived = 
+              (denomsReceived['2000'] || 0) * 2000 +
+              (denomsReceived['500'] || 0) * 500 +
+              (denomsReceived['200'] || 0) * 200 +
+              (denomsReceived['100'] || 0) * 100 +
+              (denomsReceived['50'] || 0) * 50 +
+              (denomsReceived['20'] || 0) * 20 +
+              (denomsReceived['10'] || 0) * 10 +
+              (denomsReceived['5'] || 0) * 5 +
+              (denomsReceived['2'] || 0) * 2 +
+              (denomsReceived['1'] || 0) * 1;
+            
+            const totalReturned = 
+              (denomsReturned['2000'] || 0) * 2000 +
+              (denomsReturned['500'] || 0) * 500 +
+              (denomsReturned['200'] || 0) * 200 +
+              (denomsReturned['100'] || 0) * 100 +
+              (denomsReturned['50'] || 0) * 50 +
+              (denomsReturned['20'] || 0) * 20 +
+              (denomsReturned['10'] || 0) * 10 +
+              (denomsReturned['5'] || 0) * 5 +
+              (denomsReturned['2'] || 0) * 2 +
+              (denomsReturned['1'] || 0) * 1;
+            
+            // Set the calculated values
+            updateData.total_received = totalReceived;
+            updateData.total_returned = totalReturned;
+            updateData.net_amount = totalReceived - totalReturned;
+            
+            // Validate that net_amount matches payer_amount if payer_amount is being updated
+            const newAmount = updateData.payer_amount !== undefined ? 
+                              updateData.payer_amount : 
+                              payer!.payer_amount;
+                              
+            if (newAmount !== undefined && 
+                newAmount !== null && 
+                updateData.net_amount !== newAmount) {
+              next(new ErrorResponse('Net amount from denominations does not match payer amount', 400));
+              return;
+            }
+          } catch (error) {
+            console.error('Error calculating denomination totals during update:', error);
+            next(new ErrorResponse('Error processing denomination data', 400));
             return;
           }
-        } catch (error) {
-          console.error('Error calculating denomination totals during update:', error);
-          next(new ErrorResponse('Error processing denomination data', 400));
-          return;
+        } else if (updateData.payer_amount !== undefined && updateData.payer_amount !== null) {
+          // If only payer_amount is being updated without denominations
+          // Check if the payer already has denominations
+          const existingHasDenoms = payer!.denominations_received && 
+            Object.keys(payer!.denominations_received).some((key: string) => 
+              (payer!.denominations_received as any)[key] > 0
+            );
+          
+          if (!existingHasDenoms) {
+            // No existing denominations, update totals based on new payer_amount
+            updateData.net_amount = updateData.payer_amount;
+            updateData.total_received = updateData.payer_amount;
+            updateData.total_returned = 0;
+          } else {
+            // Has existing denominations, validate against them
+            const existingNetAmount = (payer!.total_received || 0) - (payer!.total_returned || 0);
+            if (existingNetAmount !== updateData.payer_amount) {
+              next(new ErrorResponse('Payer amount does not match existing denomination calculations', 400));
+              return;
+            }
+          }
+        }
+        
+        // Clear empty denomination objects to prevent issues
+        if (updateData.denominations_received && 
+            Object.keys(updateData.denominations_received).length === 0) {
+          delete updateData.denominations_received;
+        }
+        if (updateData.denominations_returned && 
+            Object.keys(updateData.denominations_returned).length === 0) {
+          delete updateData.denominations_returned;
         }
       }
 
