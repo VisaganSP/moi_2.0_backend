@@ -19,18 +19,18 @@ export const createPayer = asyncHandler(
       next(new ErrorResponse('User not found', 401));
       return;
     }
-    
+
     // Add user id to request body
     req.body.created_by = req.user._id;
 
     // Check if payer with the same phone number already exists IN THE SAME FUNCTION
     if (req.body.payer_phno && req.body.payer_phno.trim() !== '') {
-      const existingPayer = await Payer.findOne({ 
+      const existingPayer = await Payer.findOne({
         payer_phno: req.body.payer_phno,
         function_id: req.body.function_id,
         is_deleted: false // Only consider non-deleted payers
       });
-      
+
       if (existingPayer) {
         next(new ErrorResponse('Payer with this phone number already exists in this function', 400));
         return;
@@ -41,12 +41,12 @@ export const createPayer = asyncHandler(
     if (req.body.payer_given_object === 'Cash') {
       // Check if denominations are provided
       const hasDenominations = req.body.denominations_received || req.body.denominations_returned;
-      
+
       if (hasDenominations) {
         try {
           // Calculate total received
           const denomsReceived = req.body.denominations_received || {};
-          const totalReceived = 
+          const totalReceived =
             (denomsReceived['2000'] || 0) * 2000 +
             (denomsReceived['500'] || 0) * 500 +
             (denomsReceived['200'] || 0) * 200 +
@@ -57,10 +57,10 @@ export const createPayer = asyncHandler(
             (denomsReceived['5'] || 0) * 5 +
             (denomsReceived['2'] || 0) * 2 +
             (denomsReceived['1'] || 0) * 1;
-          
+
           // Calculate total returned
           const denomsReturned = req.body.denominations_returned || {};
-          const totalReturned = 
+          const totalReturned =
             (denomsReturned['2000'] || 0) * 2000 +
             (denomsReturned['500'] || 0) * 500 +
             (denomsReturned['200'] || 0) * 200 +
@@ -71,16 +71,16 @@ export const createPayer = asyncHandler(
             (denomsReturned['5'] || 0) * 5 +
             (denomsReturned['2'] || 0) * 2 +
             (denomsReturned['1'] || 0) * 1;
-          
+
           // Set the calculated values
           req.body.total_received = totalReceived;
           req.body.total_returned = totalReturned;
           req.body.net_amount = totalReceived - totalReturned;
-          
+
           // Validate that net_amount matches payer_amount if payer_amount is provided
-          if (req.body.payer_amount !== undefined && 
-              req.body.payer_amount !== null && 
-              req.body.net_amount !== req.body.payer_amount) {
+          if (req.body.payer_amount !== undefined &&
+            req.body.payer_amount !== null &&
+            req.body.net_amount !== req.body.payer_amount) {
             next(new ErrorResponse('Net amount from denominations does not match payer amount', 400));
             return;
           }
@@ -123,15 +123,15 @@ export const getPayers = asyncHandler(
     if (req.query.function_id) {
       await invalidateCacheByPattern(`api:/functions/${req.query.function_id}/payers*`);
     }
-    
+
     // Build query - explicitly filter out deleted records
     const query: any = { is_deleted: false };
-    
+
     // Filter by function_id if provided
     if (req.query.function_id) {
       query.function_id = req.query.function_id;
     }
-    
+
     // Add search functionality
     if (req.query.search) {
       query.$or = [
@@ -153,23 +153,23 @@ export const getPayers = asyncHandler(
       const page = parseInt(req.query.page as string, 10) || 1;
       const limit = parseInt(req.query.limit as string, 10) || 10;
       const startIndex = (page - 1) * limit;
-      
+
       // Execute query with pagination
       payers = await Payer.find(query)
         .sort({ created_at: -1 })
         .skip(startIndex)
         .limit(limit)
         .lean(); // Use lean for performance
-        
+
       console.log(`Found ${payers.length} payers after pagination`);
-      
+
       // Pagination result
       const pagination = {
         current: page,
         pages: Math.ceil(total / limit),
         total
       };
-      
+
       res.status(200).json({
         success: true,
         count: payers.length,
@@ -181,9 +181,9 @@ export const getPayers = asyncHandler(
       payers = await Payer.find(query)
         .sort({ created_at: -1 })
         .lean(); // Use lean for performance
-      
+
       console.log(`Found ${payers.length} payers total (no pagination)`);
-      
+
       res.status(200).json({
         success: true,
         count: payers.length,
@@ -229,7 +229,7 @@ export const updatePayer = asyncHandler(
 
       // Extract reason_for_edit from request body
       const { reason_for_edit, ...updateData } = req.body;
-      
+
       // Validate reason for edit
       if (!reason_for_edit) {
         next(new ErrorResponse('Reason for edit is required', 400));
@@ -252,7 +252,7 @@ export const updatePayer = asyncHandler(
 
       // Store function_id for cache invalidation
       const functionId = payer.function_id;
-      
+
       // Don't allow function_id to be modified
       if (updateData.function_id) {
         delete updateData.function_id;
@@ -261,28 +261,28 @@ export const updatePayer = asyncHandler(
       // Handle denomination calculations for cash payments
       if (payer!.payer_given_object === 'Cash') {
         // Check if denominations are actually provided with real values
-        const hasReceivedDenoms = updateData.denominations_received && 
+        const hasReceivedDenoms = updateData.denominations_received &&
           Object.keys(updateData.denominations_received).length > 0 &&
           Object.values(updateData.denominations_received).some((val: any) => Number(val) > 0);
-        
-        const hasReturnedDenoms = updateData.denominations_returned && 
+
+        const hasReturnedDenoms = updateData.denominations_returned &&
           Object.keys(updateData.denominations_returned).length > 0 &&
           Object.values(updateData.denominations_returned).some((val: any) => Number(val) > 0);
-        
+
         const hasDenominations = hasReceivedDenoms || hasReturnedDenoms;
-        
+
         if (hasDenominations) {
           try {
             // Use updated denominations if provided, otherwise keep existing
-            const denomsReceived = hasReceivedDenoms ? 
-              updateData.denominations_received : 
+            const denomsReceived = hasReceivedDenoms ?
+              updateData.denominations_received :
               (payer!.denominations_received || {});
-            
-            const denomsReturned = hasReturnedDenoms ? 
-              updateData.denominations_returned : 
+
+            const denomsReturned = hasReturnedDenoms ?
+              updateData.denominations_returned :
               (payer!.denominations_returned || {});
-            
-            const totalReceived = 
+
+            const totalReceived =
               (denomsReceived['2000'] || 0) * 2000 +
               (denomsReceived['500'] || 0) * 500 +
               (denomsReceived['200'] || 0) * 200 +
@@ -293,8 +293,8 @@ export const updatePayer = asyncHandler(
               (denomsReceived['5'] || 0) * 5 +
               (denomsReceived['2'] || 0) * 2 +
               (denomsReceived['1'] || 0) * 1;
-            
-            const totalReturned = 
+
+            const totalReturned =
               (denomsReturned['2000'] || 0) * 2000 +
               (denomsReturned['500'] || 0) * 500 +
               (denomsReturned['200'] || 0) * 200 +
@@ -305,22 +305,40 @@ export const updatePayer = asyncHandler(
               (denomsReturned['5'] || 0) * 5 +
               (denomsReturned['2'] || 0) * 2 +
               (denomsReturned['1'] || 0) * 1;
-            
+
             // Set the calculated values
             updateData.total_received = totalReceived;
             updateData.total_returned = totalReturned;
             updateData.net_amount = totalReceived - totalReturned;
-            
+
             // Validate that net_amount matches payer_amount if payer_amount is being updated
-            const newAmount = updateData.payer_amount !== undefined ? 
-                              updateData.payer_amount : 
-                              payer!.payer_amount;
-                              
-            if (newAmount !== undefined && 
-                newAmount !== null && 
-                updateData.net_amount !== newAmount) {
-              next(new ErrorResponse('Net amount from denominations does not match payer amount', 400));
-              return;
+            const newAmount = updateData.payer_amount !== undefined ?
+              updateData.payer_amount :
+              payer!.payer_amount;
+
+            if (newAmount !== undefined && newAmount !== null) {
+              // Debug logging
+              console.log('Validating amounts:', {
+                netAmount: updateData.net_amount,
+                netAmountType: typeof updateData.net_amount,
+                payerAmount: newAmount,
+                payerAmountType: typeof newAmount
+              });
+
+              // Convert both values to numbers for comparison
+              const numericNetAmount = Number(updateData.net_amount);
+              const numericNewAmount = Number(newAmount);
+
+              // Check with a small tolerance for floating point precision
+              if (Math.abs(numericNetAmount - numericNewAmount) > 0.001) {
+                console.log('Amount mismatch:', {
+                  netAmount: numericNetAmount,
+                  payerAmount: numericNewAmount,
+                  difference: numericNetAmount - numericNewAmount
+                });
+                next(new ErrorResponse(`Net amount from denominations (${numericNetAmount}) does not match payer amount (${numericNewAmount})`, 400));
+                return;
+              }
             }
           } catch (error) {
             console.error('Error calculating denomination totals during update:', error);
@@ -330,11 +348,11 @@ export const updatePayer = asyncHandler(
         } else if (updateData.payer_amount !== undefined && updateData.payer_amount !== null) {
           // If only payer_amount is being updated without denominations
           // Check if the payer already has denominations
-          const existingHasDenoms = payer!.denominations_received && 
-            Object.keys(payer!.denominations_received).some((key: string) => 
+          const existingHasDenoms = payer!.denominations_received &&
+            Object.keys(payer!.denominations_received).some((key: string) =>
               (payer!.denominations_received as any)[key] > 0
             );
-          
+
           if (!existingHasDenoms) {
             // No existing denominations, update totals based on new payer_amount
             updateData.net_amount = updateData.payer_amount;
@@ -349,14 +367,14 @@ export const updatePayer = asyncHandler(
             }
           }
         }
-        
+
         // Clear empty denomination objects to prevent issues
-        if (updateData.denominations_received && 
-            Object.keys(updateData.denominations_received).length === 0) {
+        if (updateData.denominations_received &&
+          Object.keys(updateData.denominations_received).length === 0) {
           delete updateData.denominations_received;
         }
-        if (updateData.denominations_returned && 
-            Object.keys(updateData.denominations_returned).length === 0) {
+        if (updateData.denominations_returned &&
+          Object.keys(updateData.denominations_returned).length === 0) {
           delete updateData.denominations_returned;
         }
       }
@@ -386,30 +404,30 @@ export const updatePayer = asyncHandler(
 
       // More aggressive cache invalidation with better logging
       console.log('Starting cache invalidation for updated payer...');
-      
+
       // Clear all payer-related caches
       await invalidateCacheByPattern('api:/payers*');
       console.log('Invalidated general payers cache');
-      
+
       // Clear specific payer cache (try both ObjectId and string formats)
       await invalidateCacheByPattern(`api:/payers/${req.params.id}`);
       await invalidateCacheByPattern(`api:/payers/${req.params.id.toString()}`);
       console.log(`Invalidated cache for payer ID: ${req.params.id}`);
-      
+
       // Clear function-payer relationship caches
       await invalidateCacheByPattern(`api:/functions/${functionId}/payers*`);
       await invalidateCacheByPattern(`api:/functions/${functionId.toString()}/payers*`);
       await invalidateCacheByPattern(`api:/functions/${functionId}/denominations*`);
       console.log(`Invalidated cache for function-payers: ${functionId}`);
-      
+
       // Clear edit logs cache
       await invalidateCacheByPattern('api:/edit-logs*');
       console.log('Invalidated edit logs cache');
-      
+
       // Clear any specific cached routes that might contain this payer
       await invalidateCacheByPattern(`api:/payers/phone/*`);
       console.log('Invalidated phone-specific caches');
-      
+
       // Force cache refresh by adding a timestamp to force a cache miss
       const timestamp = Date.now();
       await invalidateCacheByPattern(`api:/payers?_t=${timestamp}`);
@@ -480,7 +498,7 @@ export const getDeletedPayers = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     // Build query for deleted payers
     const query: any = { is_deleted: true };
-    
+
     // Filter by function_id if provided
     if (req.query.function_id) {
       query.function_id = req.query.function_id;
@@ -505,23 +523,23 @@ export const getDeletedPayers = asyncHandler(
       const page = parseInt(req.query.page as string, 10) || 1;
       const limit = parseInt(req.query.limit as string, 10) || 10;
       const startIndex = (page - 1) * limit;
-      
+
       // Execute query with pagination
       payers = await Payer.find(query)
         .sort({ deleted_at: -1 })
         .skip(startIndex)
         .limit(limit)
         .lean(); // Use lean for performance
-        
+
       console.log(`Found ${payers.length} deleted payers after pagination`);
-      
+
       // Pagination result
       const pagination = {
         current: page,
         pages: Math.ceil(total / limit),
         total
       };
-      
+
       res.status(200).json({
         success: true,
         count: payers.length,
@@ -533,9 +551,9 @@ export const getDeletedPayers = asyncHandler(
       payers = await Payer.find(query)
         .sort({ deleted_at: -1 })
         .lean(); // Use lean for performance
-      
+
       console.log(`Found ${payers.length} deleted payers total (no pagination)`);
-      
+
       res.status(200).json({
         success: true,
         count: payers.length,
@@ -617,7 +635,7 @@ export const getPayersByFunction = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const functionId = req.params.functionId;
-      
+
       // Force invalidate all related caches
       try {
         await Promise.all([
@@ -631,21 +649,21 @@ export const getPayersByFunction = asyncHandler(
         console.error('Cache invalidation error:', cacheError);
         // Continue execution even if cache invalidation fails
       }
-      
+
       // Build query
-      const query: { 
-        function_id: string; 
+      const query: {
+        function_id: string;
         is_deleted: boolean;
         [key: string]: any; // This allows dynamic properties to be added and removed
-      } = { 
+      } = {
         function_id: functionId,
         is_deleted: false
       };
-      
+
       // Add a timestamp to the query for logging
       const timestamp = new Date().getTime();
       console.log(`Query timestamp: ${timestamp}`);
-      
+
       console.log('Query for function payers:', JSON.stringify(query));
 
       // Get total count directly from database
@@ -659,26 +677,26 @@ export const getPayersByFunction = asyncHandler(
         const page = parseInt(req.query.page as string, 10) || 1;
         const limit = parseInt(req.query.limit as string, 10) || 10;
         const startIndex = (page - 1) * limit;
-        
+
         // Execute query with pagination, ensuring we get fresh data with lean()
         payers = await Payer.find(query)
           .sort({ created_at: -1 })
           .skip(startIndex)
           .limit(limit)
           .lean();
-          
+
         console.log(`Found ${payers.length} payers for function after pagination`);
-        
+
         // List the IDs of found payers for debugging
         console.log('Payer IDs found:', payers.map(p => p._id).join(', '));
-        
+
         // Pagination result
         const pagination = {
           current: page,
           pages: Math.ceil(total / limit),
           total
         };
-        
+
         res.status(200).json({
           success: true,
           count: payers.length,
@@ -691,10 +709,10 @@ export const getPayersByFunction = asyncHandler(
         payers = await Payer.find(query)
           .sort({ created_at: -1 })
           .lean();
-        
+
         console.log(`Found ${payers.length} payers for function (no pagination)`);
         console.log('Payer IDs found:', payers.map(p => p._id).join(', '));
-        
+
         res.status(200).json({
           success: true,
           count: payers.length,
@@ -716,7 +734,7 @@ export const getTotalPaymentByFunction = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const functionId = req.params.functionId;
-      
+
       // Force invalidate all related caches
       try {
         await Promise.all([
@@ -729,17 +747,17 @@ export const getTotalPaymentByFunction = asyncHandler(
       } catch (cacheError) {
         console.error('Cache invalidation error:', cacheError);
       }
-      
+
       console.log('Computing total payment for function:', functionId);
-      
+
       // Get all payers for this function with is_deleted: false
-      const payers = await Payer.find({ 
+      const payers = await Payer.find({
         function_id: functionId,
-        is_deleted: false 
+        is_deleted: false
       }).lean();
-      
+
       console.log(`Found ${payers.length} payers for function ID: ${functionId}`);
-      
+
       // Log each payer for debugging
       if (payers.length > 0) {
         payers.forEach((payer, index) => {
@@ -751,7 +769,7 @@ export const getTotalPaymentByFunction = asyncHandler(
           });
         });
       }
-      
+
       // Calculate totals manually instead of using aggregation
       let totalAmount = 0;
       payers.forEach(payer => {
@@ -759,7 +777,7 @@ export const getTotalPaymentByFunction = asyncHandler(
         const amount = typeof payer.payer_amount === 'number' ? payer.payer_amount : 0;
         totalAmount += amount;
       });
-      
+
       console.log('Calculated total amount:', totalAmount);
       console.log('Total payers count:', payers.length);
 
@@ -792,21 +810,21 @@ export const getPayerByPhoneNumber = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const phoneNumber = req.params.phoneNumber;
-      
+
       // Check if phone number is provided
       if (!phoneNumber || phoneNumber.trim() === '') {
         next(new ErrorResponse('Phone number is required', 400));
         return;
       }
-      
+
       console.log(`Searching for payer with phone number: ${phoneNumber}`);
-      
+
       // Find payers with the given phone number that are not deleted
       const payers = await Payer.find({
         payer_phno: phoneNumber,
         is_deleted: false
       }).lean();
-      
+
       if (payers.length === 0) {
         res.status(404).json({
           success: false,
@@ -814,9 +832,9 @@ export const getPayerByPhoneNumber = asyncHandler(
         });
         return;
       }
-      
+
       console.log(`Found ${payers.length} payer(s) with phone number: ${phoneNumber}`);
-      
+
       // Return the payer(s) found
       res.status(200).json({
         success: true,
@@ -837,12 +855,12 @@ export const getUniquePayerNames = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       console.log('Fetching unique payer names');
-      
+
       // Get all unique payer names using MongoDB distinct operation
       const uniqueNames = await Payer.distinct('payer_name', { is_deleted: false });
-      
+
       console.log(`Found ${uniqueNames.length} unique payer names`);
-      
+
       res.status(200).json({
         success: true,
         count: uniqueNames.length,
@@ -862,15 +880,15 @@ export const getUniquePayerGifts = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       console.log('Fetching unique payer gifts');
-      
+
       // Get all unique payer gift names, filtering out empty strings
-      const uniqueGifts = await Payer.distinct('payer_gift_name', { 
+      const uniqueGifts = await Payer.distinct('payer_gift_name', {
         is_deleted: false,
         payer_gift_name: { $ne: "" } // Filter out empty strings
       });
-      
+
       console.log(`Found ${uniqueGifts.length} unique payer gifts`);
-      
+
       res.status(200).json({
         success: true,
         count: uniqueGifts.length,
@@ -890,12 +908,12 @@ export const getUniquePayerRelations = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       console.log('Fetching unique payer relations');
-      
+
       // Get all unique payer relations
       const uniqueRelations = await Payer.distinct('payer_relation', { is_deleted: false });
-      
+
       console.log(`Found ${uniqueRelations.length} unique payer relations`);
-      
+
       res.status(200).json({
         success: true,
         count: uniqueRelations.length,
@@ -915,12 +933,12 @@ export const getUniquePayerCities = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       console.log('Fetching unique payer cities');
-      
+
       // Get all unique payer cities
       const uniqueCities = await Payer.distinct('payer_city', { is_deleted: false });
-      
+
       console.log(`Found ${uniqueCities.length} unique payer cities`);
-      
+
       res.status(200).json({
         success: true,
         count: uniqueCities.length,
@@ -940,12 +958,12 @@ export const getUniquePayerWorks = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       console.log('Fetching unique payer work types');
-      
+
       // Get all unique payer work types
       const uniqueWorks = await Payer.distinct('payer_work', { is_deleted: false });
-      
+
       console.log(`Found ${uniqueWorks.length} unique payer work types`);
-      
+
       res.status(200).json({
         success: true,
         count: uniqueWorks.length,
@@ -967,7 +985,7 @@ export const searchPayers = asyncHandler(
     try {
       // Extract function ID from params if it's a function-specific search
       const functionId = req.params.functionId;
-      
+
       // Extract query parameters with type assertions
       const searchParam = req.query.searchParam as string;
       const searchQuery = req.query.searchQuery as string;
@@ -996,10 +1014,10 @@ export const searchPayers = asyncHandler(
 
       // Build search query
       let searchCondition: any = {};
-      
+
       // Escape special regex characters
       const escapeRegex = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      
+
       switch (searchParam) {
         case 'payer_amount':
           // For numeric fields, support range search
@@ -1019,7 +1037,7 @@ export const searchPayers = asyncHandler(
             };
           }
           break;
-          
+
         case 'payer_phno':
           // For phone numbers, default to startsWith
           if (searchType === 'exact') {
@@ -1030,7 +1048,7 @@ export const searchPayers = asyncHandler(
             };
           }
           break;
-          
+
         case 'payer_cash_method':
           // For payment methods, case-insensitive exact or partial match
           if (searchType === 'exact') {
@@ -1045,28 +1063,28 @@ export const searchPayers = asyncHandler(
             };
           }
           break;
-          
+
         default:
           // For string fields (payer_name, payer_work, payer_relation, payer_city, function_id)
           switch (searchType) {
             case 'exact':
               searchCondition[searchParam] = searchQuery;
               break;
-              
+
             case 'startsWith':
               searchCondition[searchParam] = {
                 $regex: `^${escapeRegex(searchQuery)}`,
                 $options: 'i'
               };
               break;
-              
+
             case 'endsWith':
               searchCondition[searchParam] = {
                 $regex: `${escapeRegex(searchQuery)}$`,
                 $options: 'i'
               };
               break;
-              
+
             case 'fuzzy':
               // Create a fuzzy search pattern by allowing characters between each letter
               const fuzzyPattern = searchQuery.split('').map(char => escapeRegex(char)).join('.*');
@@ -1075,7 +1093,7 @@ export const searchPayers = asyncHandler(
                 $options: 'i'
               };
               break;
-              
+
             case 'partial':
             default:
               // Default partial search - contains anywhere
@@ -1190,7 +1208,7 @@ export const bulkSoftDeletePayers = asyncHandler(
             payer.is_deleted = true;
             payer.deleted_at = new Date();
             await payer.save();
-            
+
             deleted.push(payerId);
             functionIdsToInvalidate.add(payer.function_id);
             console.log(`Successfully soft deleted payer: ${payerId}`);
@@ -1269,7 +1287,7 @@ export const bulkRestorePayers = asyncHandler(
             payer.is_deleted = false;
             payer.deleted_at = undefined;
             await payer.save();
-            
+
             restored.push(payerId);
             functionIdsToInvalidate.add(payer.function_id);
             console.log(`Successfully restored payer: ${payerId}`);
@@ -1366,7 +1384,7 @@ export const bulkPermanentlyDeletePayers = asyncHandler(
 
         // Track successfully deleted payers
         const deletedCount = deleteResult.deletedCount || 0;
-        
+
         // Determine which IDs were successfully deleted
         for (const payerId of payer_ids) {
           if (!notFoundOrNotSoftDeleted.includes(payerId)) {
