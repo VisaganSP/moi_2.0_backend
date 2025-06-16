@@ -20,6 +20,7 @@ This document provides comprehensive information about the MOI Software Online A
   - [Get Functions by Date Range](#get-functions-by-date-range)
   - [Delete Function Permanently](#permanently-delete-function)
   - [Get Function Denominations](#get-function-denominations)
+  - [Get Function Payment Methods](#get-function-payment-methods)
   - [Bulk Soft Delete Functions](#bulk-soft-delete-functions)
   - [Bulk Restore Functions](#bulk-restore-functions)
   - [Bulk Permanently Delete Functions](#bulk-permanently-delete-functions)
@@ -816,6 +817,62 @@ curl -X GET http://localhost:5001/api/functions/683246abcd1234567890/denominatio
 - `total_in_hand` represents the actual cash amount based on denomination counts
 - `cash_out_pay` and `special_handler_pay` are placeholder fields for future use
 - The response includes a timestamp for tracking when the summary was generated
+
+### Get Function Payment Methods
+Retrieves a summary of all payment methods and their totals for a specific function.
+
+- **URL**: `/functions/:functionId/denominations-payment-methods`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token)
+
+**Parameters**:
+- `functionId` (required): The ID of the function to get payment methods summary for
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/functions/683246abcd1234567890/denominations-payment-methods \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "Cash": 25000,
+    "Google Pay": 15000,
+    "PhonePe": 12000,
+    "Paytm": 5000,
+    "Bank Transfer": 20000,
+    "Other": 3000
+  },
+  "summary": {
+    "total": 80000,
+    "count": 45
+  },
+  "timestamp": "2025-05-12T14:30:00.000Z"
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Failed to generate payment methods summary"
+}
+```
+
+**Notes**:
+- Includes all non-denomination payment methods: Cash, Google Pay, PhonePe, Paytm, Bank Transfer, and Other
+- Excludes deleted payers (`is_deleted: false`)
+- Returns the sum of `payer_given_amt` for each payment method
+- `summary.total` represents the combined total of all payment methods
+- `summary.count` represents the number of payers using these payment methods
+- The response includes a timestamp for tracking when the summary was generated
+- Payment methods with zero amount are still included in the response for consistency
 
 ### Bulk Soft Delete Functions
 

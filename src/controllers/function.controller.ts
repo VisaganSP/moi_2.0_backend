@@ -932,3 +932,143 @@ export const bulkPermanentlyDeleteFunctions = asyncHandler(
     }
   }
 );
+
+// @desc    Get payment methods summary for a function (excluding denomination cash)
+// @route   GET /api/functions/:functionId/payment-methods
+// @access  Private
+export const getFunctionPaymentMethods = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const functionId = req.params.functionId;
+      
+      console.log(`Generating payment methods summary for function: ${functionId}`);
+      
+      // First, get all payers to check for denominations
+      const allPayers = await Payer.find({
+        function_id: functionId,
+        is_deleted: false
+      }).lean();
+      
+      console.log(`Found ${allPayers.length} total payers for function ID: ${functionId}`);
+      
+      // Filter out cash payments that have denominations
+      const filteredPayers = allPayers.filter(payer => {
+        // First check if this is a Cash object (not gift or other item)
+        if (payer.payer_given_object === 'Cash') {
+          // If it's a Cash payment, check if it has denominations based on payer_cash_method
+          if (payer.payer_cash_method === 'Cash') {
+            const hasDenominations = 
+              (payer.denominations_received && Object.keys(payer.denominations_received).length > 0) ||
+              (payer.denominations_returned && Object.keys(payer.denominations_returned).length > 0);
+            
+            // Include only Cash payments WITHOUT denominations
+            return !hasDenominations;
+          }
+          // Include all other cash methods (Google Pay, PhonePe, etc.)
+          return true;
+        }
+        // Exclude non-Cash objects (gifts, etc.)
+        return false;
+      });
+      
+      console.log(`Filtered to ${filteredPayers.length} cash payers (excluding those with denominations)`);
+      
+      // Initialize payment methods object
+      const paymentMethods: Record<string, number> = {
+        'Cash': 0,
+        'Google Pay': 0,
+        'PhonePe': 0,
+        'Paytm': 0,
+        'Bank Transfer': 0,
+        'Other': 0
+      };
+      
+      // Calculate totals for each payment method
+      let totalAmount = 0;
+      let totalCount = 0;
+      
+      filteredPayers.forEach(payer => {
+        const amount = payer.payer_amount || 0;
+        let method = payer.payer_cash_method;
+        
+        // Handle null or empty payment methods - move to 'Other'
+        if (!method || method === '') {
+          method = 'Other';
+        }
+        
+        // Normalize payment method names
+        if (method === 'GPay') {
+          method = 'Google Pay';
+        }
+        
+        // Add to appropriate category
+        if (paymentMethods.hasOwnProperty(method)) {
+          paymentMethods[method] += amount;
+        } else {
+          // Any unknown payment method goes to Other
+          paymentMethods['Other'] += amount;
+        }
+        
+        totalAmount += amount;
+        totalCount++;
+      });
+      
+      // Clean the response - only include payment methods with amount > 0
+      const cleanedPaymentMethods: Record<string, number> = {};
+      Object.entries(paymentMethods).forEach(([method, amount]) => {
+        if (amount > 0) {
+          cleanedPaymentMethods[method] = amount;
+        }
+      });
+      
+      // Prepare a more detailed summary
+      const methodCounts: Record<string, number> = {};
+      filteredPayers.forEach(payer => {
+        // Only process Cash objects
+        if (payer.payer_given_object === 'Cash') {
+          let method = payer.payer_cash_method;
+          
+          // Handle null or empty payment methods
+          if (!method || method === '') {
+            method = 'Other';
+          }
+          
+          // Normalize payment method names
+          if (method === 'GPay') {
+            method = 'Google Pay';
+          }
+          
+          // Count occurrences of each method
+          if (methodCounts.hasOwnProperty(method)) {
+            methodCounts[method]++;
+          } else if (paymentMethods.hasOwnProperty(method)) {
+            methodCounts[method] = 1;
+          } else {
+            methodCounts['Other'] = (methodCounts['Other'] || 0) + 1;
+          }
+        }
+      });
+      
+      // Create a detailed summary with count and amount for each method
+      const detailedSummary = Object.entries(cleanedPaymentMethods).map(([method, amount]) => ({
+        payment_method: method,
+        count: methodCounts[method] || 0,
+        total_amount: amount
+      }));
+      
+      res.status(200).json({
+        success: true,
+        data: detailedSummary,
+        summary: {
+          total_amount: totalAmount,
+          total_count: totalCount,
+          methods_count: Object.keys(cleanedPaymentMethods).length
+        },
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error generating payment methods summary:', error);
+      next(new ErrorResponse('Failed to generate payment methods summary', 500));
+    }
+  }
+);
