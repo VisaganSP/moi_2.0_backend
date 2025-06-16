@@ -21,7 +21,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"username\": \"john\",\n    \"email\": \"john@example.com\",\n    \"password\": \"12345678\"\n  }",
+							"raw": "{\n    \"username\": \"dummy\",\n    \"email\": \"dummy@example.com\",\n    \"password\": \"12345678\"\n  }",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -56,7 +56,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"visagan@example.com\",\n    \"password\": \"12345678\"\n  }",
+							"raw": "{\n    \"email\": \"senthil@example.com\",\n    \"password\": \"12345678\"\n  }",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -835,12 +835,12 @@
 							},
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q"
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"function_name\": \"Wedding Reception\",\n    \"function_owner_name\": \"John Doe\",\n    \"function_owner_city\": \"Chennai\",\n    \"function_owner_address\": \"123 Main St\",\n    \"function_owner_phno\": \"9876543210\",\n    \"function_amt_spent\": 500000,\n    \"function_hero_name\": \"Groom Name\",\n    \"function_heroine_name\": \"Bride Name\",\n    \"function_held_place\": \"Golden Palace\",\n    \"function_held_city\": \"Chennai\",\n    \"function_start_date\": \"2025-06-15T00:00:00.000Z\",\n    \"function_start_time\": \"11:00 AM\",\n    \"function_end_date\": \"2025-06-15T00:00:00.000Z\",\n    \"function_end_time\": \"10:00 PM\",\n    \"function_total_days\": 1,\n    \"function_bill_details\": {\n      \"owner_name\": \"John Doe\",\n      \"owner_occupation\": \"Software Engineer\",\n      \"wife_name\": \"Jane Doe\",\n      \"wife_occupation\": \"Doctor\",\n      \"function_place\": \"Golden Palace\",\n      \"function_city\": \"Chennai\"\n    }\n  }",
+							"raw": "{\n    \"function_name\": \"werrtyuytgrfetyui\",\n    \"function_owner_name\": \"Doe\",\n    \"function_owner_city\": \"Madurai\",\n    \"function_owner_address\": \"123 Main St\",\n    \"function_owner_phno\": \"9876543210\",\n    \"function_amt_spent\": 400000,\n    \"function_hero_name\": \"Groom Name\",\n    \"function_heroine_name\": \"Bride Name\",\n    \"function_held_place\": \"Golden Palace\",\n    \"function_held_city\": \"Theni\",\n    \"function_start_date\": \"2025-06-15T00:00:00.000Z\",\n    \"function_start_time\": \"11:00 AM\",\n    \"function_end_date\": \"2025-06-15T00:00:00.000Z\",\n    \"function_end_time\": \"10:00 PM\",\n    \"function_total_days\": 1,\n    \"function_bill_details\": {\n      \"owner_name\": \"John Doe\",\n      \"owner_occupation\": \"Software Engineer\",\n      \"wife_name\": \"Jane Doe\",\n      \"wife_occupation\": \"Doctor\",\n      \"function_place\": \"Golden Palace\",\n      \"function_city\": \"Chennai\"\n    }\n  }",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1049,7 +1049,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZmI5MzkxZDM0NTgwODc1YTM2OCIsImlhdCI6MTc0NzE2MTA0MywiZXhwIjoxNzQ5NzUzMDQzfQ.GacFNIV2vVin1LDaw9zgz8ZCZzcidC2Su9_o234oT4Q"
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
 							}
 						],
 						"url": {
@@ -1116,7 +1116,7 @@
 							}
 						],
 						"url": {
-							"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/denominations",
+							"raw": "http://localhost:5001/api/functions/srdtfyguh-visagan-bangalore-2025-06-11-2025-06-12t17:34:07.652z/denominations",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -1125,7 +1125,7 @@
 							"path": [
 								"api",
 								"functions",
-								"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+								"srdtfyguh-visagan-bangalore-2025-06-11-2025-06-12t17:34:07.652z",
 								"denominations"
 							]
 						}
@@ -1248,6 +1248,33 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "GetFunctionDenomPaymentMethods",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/denominations-payment-methods",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"functions",
+								"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+								"denominations-payment-methods"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -1264,7 +1291,7 @@
 								"header": [
 									{
 										"key": "Authorization",
-										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NGQzZWI4NGNjNzc0ZjllZDA5NDgzMiIsImlhdCI6MTc0OTg5Mjc5MywiZXhwIjoxNzUyNDg0NzkzfQ.2Xxc-kmNiai3K3mkVk-m_tGBbaDhrIcBrc6fkogpSbk"
 									}
 								],
 								"url": {
@@ -1839,7 +1866,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"function_id\": \"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am\",\n    \"function_name\": \"திருமண_விழா\",\n    \"payer_name\": \"Rahul Kumar\",\n    \"payer_phno\": \"\",\n    \"payer_work\": \"Business\",\n    \"payer_given_object\": \"Cash\",\n    \"payer_cash_method\": \"Bank Transfer\",\n    \"payer_amount\": 25000,\n    \"payer_gift_name\": \"\",\n    \"payer_relation\": \"Friend\",\n    \"payer_city\": \"Bangalore\",\n    \"payer_address\": \"456 Park Avenue\",\n    \"current_date\": \"2025-05-12T12:00:00.000Z\",\n    \"current_time\": \"2:00 PM\",\n    \"denominations_received\": {\n      \"2000\": 10,\n      \"500\": 10\n    },\n    \"denominations_returned\": {}\n  }",
+							"raw": "{\n    \"function_id\": \"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am\",\n    \"function_name\": \"திருமண_விழா\",\n    \"payer_name\": \"Visagan S\",\n    \"payer_work\": \"Business\",\n    \"payer_given_object\": \"Cash\",\n    \"payer_cash_method\": \"Cash\",\n    \"payer_amount\": 1000,\n    \"payer_gift_name\": \"\",\n    \"payer_relation\": \"Friend\",\n    \"payer_city\": \"Bangalore\",\n    \"payer_address\": \"456 Park Avenue\",\n    \"denominations_received\": {\n        \"2000\": 1\n    },\n    \"denominations_returned\": {\n        \"500\": 2\n    }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1872,7 +1899,7 @@
 							}
 						],
 						"url": {
-							"raw": "http://localhost:5001/api/payers?function_id=குழந்தை_பிறந்தநாள்_விழா-செல்வராஜ்_கண்ணன்-கோயம்புத்தூர்-2025-07-25-5:00_pm&page=1&limit=100",
+							"raw": "http://localhost:5001/api/payers?function_id=srdtfyguh-visagan-bangalore-2025-06-11-2025-06-12t17:34:07.652z&page=1&limit=100",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -1885,7 +1912,7 @@
 							"query": [
 								{
 									"key": "function_id",
-									"value": "குழந்தை_பிறந்தநாள்_விழா-செல்வராஜ்_கண்ணன்-கோயம்புத்தூர்-2025-07-25-5:00_pm"
+									"value": "srdtfyguh-visagan-bangalore-2025-06-11-2025-06-12t17:34:07.652z"
 								},
 								{
 									"key": "page",
@@ -1911,7 +1938,7 @@
 							}
 						],
 						"url": {
-							"raw": "http://localhost:5001/api/payers/683fd13531be90104c2cba25",
+							"raw": "http://localhost:5001/api/payers/684d852b4cc774f9ed094b32",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -1920,7 +1947,7 @@
 							"path": [
 								"api",
 								"payers",
-								"683fd13531be90104c2cba25"
+								"684d852b4cc774f9ed094b32"
 							]
 						}
 					},
@@ -1942,7 +1969,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"payer_amount\": 30000,\n    \"payer_cash_method\": \"Cash\",\n    \"denominations_received\": {\n      \"2000\": 15\n    },\n    \"reason_for_edit\": \"Corrected payment amount and updated denominations\"\n  }",
+							"raw": "{\n    \"payer_amount\": 3500,\n    \"denominations_received\": {\n        \"500\": 7,\n        \"2000\": 0\n    },\n    \"denominations_returned\": {\n        \"500\": 0\n    },\n    \"reason_for_edit\": \"Corrected payment amount and updated denominations\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1950,7 +1977,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:5001/api/payers/683fd13531be90104c2cba25",
+							"raw": "http://localhost:5001/api/payers/684d852b4cc774f9ed094b32",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -1959,7 +1986,7 @@
 							"path": [
 								"api",
 								"payers",
-								"683fd13531be90104c2cba25"
+								"684d852b4cc774f9ed094b32"
 							]
 						}
 					},
@@ -2142,11 +2169,11 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
 							}
 						],
 						"url": {
-							"raw": "http://localhost:5001/api/payers/phone/9876543212",
+							"raw": "http://localhost:5001/api/payers/phone/9800017756",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -2156,7 +2183,7 @@
 								"api",
 								"payers",
 								"phone",
-								"9876543212"
+								"9800017756"
 							]
 						}
 					},
