@@ -228,13 +228,19 @@ export const updatePayer = asyncHandler(
       }
 
       // Extract reason_for_edit from request body
-      const { reason_for_edit, ...updateData } = req.body;
+      const { reason_for_edit, ...requestData } = req.body;
 
       // Validate reason for edit
       if (!reason_for_edit) {
         next(new ErrorResponse('Reason for edit is required', 400));
         return;
       }
+
+      // Log the incoming request data for debugging
+      console.log('Update Payer Request:', {
+        payerId: req.params.id,
+        updateData: JSON.stringify(requestData)
+      });
 
       // Find payer by MongoDB _id
       let payer = await Payer.findOne({
@@ -253,6 +259,9 @@ export const updatePayer = asyncHandler(
       // Store function_id for cache invalidation
       const functionId = payer.function_id;
 
+      // Create the update data object that we'll modify
+      let updateData: Record<string, any> = { ...requestData };
+      
       // Don't allow function_id to be modified
       if (updateData.function_id) {
         delete updateData.function_id;
@@ -260,130 +269,151 @@ export const updatePayer = asyncHandler(
 
       // Handle denomination calculations for cash payments
       if (payer!.payer_given_object === 'Cash') {
-        // Check if denominations are actually provided with real values
-        const hasReceivedDenoms = updateData.denominations_received &&
-          Object.keys(updateData.denominations_received).length > 0 &&
-          Object.values(updateData.denominations_received).some((val: any) => Number(val) > 0);
+        // Reset all denomination-related fields to ensure clean slate
+        updateData.total_received = 0;
+        updateData.total_returned = 0;
+        updateData.net_amount = 0;
 
-        const hasReturnedDenoms = updateData.denominations_returned &&
-          Object.keys(updateData.denominations_returned).length > 0 &&
-          Object.values(updateData.denominations_returned).some((val: any) => Number(val) > 0);
+        // Check if denominations are actually provided with real values
+        const hasReceivedDenoms = requestData.denominations_received &&
+          typeof requestData.denominations_received === 'object';
+
+        const hasReturnedDenoms = requestData.denominations_returned &&
+          typeof requestData.denominations_returned === 'object';
 
         const hasDenominations = hasReceivedDenoms || hasReturnedDenoms;
 
         if (hasDenominations) {
           try {
-            // Use updated denominations if provided, otherwise keep existing
-            const denomsReceived = hasReceivedDenoms ?
-              updateData.denominations_received :
-              (payer!.denominations_received || {});
-
-            const denomsReturned = hasReturnedDenoms ?
-              updateData.denominations_returned :
-              (payer!.denominations_returned || {});
-
-            const totalReceived =
-              (denomsReceived['2000'] || 0) * 2000 +
-              (denomsReceived['500'] || 0) * 500 +
-              (denomsReceived['200'] || 0) * 200 +
-              (denomsReceived['100'] || 0) * 100 +
-              (denomsReceived['50'] || 0) * 50 +
-              (denomsReceived['20'] || 0) * 20 +
-              (denomsReceived['10'] || 0) * 10 +
-              (denomsReceived['5'] || 0) * 5 +
-              (denomsReceived['2'] || 0) * 2 +
-              (denomsReceived['1'] || 0) * 1;
-
-            const totalReturned =
-              (denomsReturned['2000'] || 0) * 2000 +
-              (denomsReturned['500'] || 0) * 500 +
-              (denomsReturned['200'] || 0) * 200 +
-              (denomsReturned['100'] || 0) * 100 +
-              (denomsReturned['50'] || 0) * 50 +
-              (denomsReturned['20'] || 0) * 20 +
-              (denomsReturned['10'] || 0) * 10 +
-              (denomsReturned['5'] || 0) * 5 +
-              (denomsReturned['2'] || 0) * 2 +
-              (denomsReturned['1'] || 0) * 1;
-
-            // Set the calculated values
-            updateData.total_received = totalReceived;
-            updateData.total_returned = totalReturned;
-            updateData.net_amount = totalReceived - totalReturned;
-
-            // Validate that net_amount matches payer_amount if payer_amount is being updated
-            const newAmount = updateData.payer_amount !== undefined ?
-              updateData.payer_amount :
-              payer!.payer_amount;
-
-            if (newAmount !== undefined && newAmount !== null) {
-              // Debug logging
-              console.log('Validating amounts:', {
-                netAmount: updateData.net_amount,
-                netAmountType: typeof updateData.net_amount,
-                payerAmount: newAmount,
-                payerAmountType: typeof newAmount
+            // Clean up received denominations - only keep values > 0
+            if (hasReceivedDenoms) {
+              const cleanedReceivedDenoms: Record<string, number> = {};
+              const denominations = [2000, 500, 200, 100, 50, 20, 10, 5, 2, 1];
+              
+              // Calculate totalReceived while cleaning
+              let totalReceived = 0;
+              
+              denominations.forEach(denom => {
+                // Safely access denomination values with proper type checking
+                const denomKey = denom.toString();
+                let count = 0;
+                
+                if (requestData.denominations_received && 
+                    requestData.denominations_received[denomKey] !== undefined) {
+                  count = Number(requestData.denominations_received[denomKey]) || 0;
+                }
+                
+                if (count > 0) {
+                  cleanedReceivedDenoms[denomKey] = count;
+                  totalReceived += denom * count;
+                }
               });
-
-              // Convert both values to numbers for comparison
-              const numericNetAmount = Number(updateData.net_amount);
-              const numericNewAmount = Number(newAmount);
-
-              // Check with a small tolerance for floating point precision
-              if (Math.abs(numericNetAmount - numericNewAmount) > 0.001) {
-                console.log('Amount mismatch:', {
-                  netAmount: numericNetAmount,
-                  payerAmount: numericNewAmount,
-                  difference: numericNetAmount - numericNewAmount
-                });
-                next(new ErrorResponse(`Net amount from denominations (${numericNetAmount}) does not match payer amount (${numericNewAmount})`, 400));
-                return;
-              }
+              
+              // Update the denomination objects with cleaned versions
+              updateData.denominations_received = cleanedReceivedDenoms;
+              updateData.total_received = totalReceived;
+              
+              // Log for debugging
+              console.log('Cleaned received denominations:', {
+                original: requestData.denominations_received,
+                cleaned: cleanedReceivedDenoms,
+                totalReceived
+              });
+            } else {
+              // No received denominations provided, ensure empty object
+              updateData.denominations_received = {};
             }
+
+            // Clean up returned denominations - only keep values > 0
+            if (hasReturnedDenoms) {
+              const cleanedReturnedDenoms: Record<string, number> = {};
+              const denominations = [2000, 500, 200, 100, 50, 20, 10, 5, 2, 1];
+              
+              // Calculate totalReturned while cleaning
+              let totalReturned = 0;
+              
+              denominations.forEach(denom => {
+                // Safely access denomination values with proper type checking
+                const denomKey = denom.toString();
+                let count = 0;
+                
+                if (requestData.denominations_returned && 
+                    requestData.denominations_returned[denomKey] !== undefined) {
+                  count = Number(requestData.denominations_returned[denomKey]) || 0;
+                }
+                
+                if (count > 0) {
+                  cleanedReturnedDenoms[denomKey] = count;
+                  totalReturned += denom * count;
+                }
+              });
+              
+              // Update the denomination objects with cleaned versions
+              updateData.denominations_returned = cleanedReturnedDenoms;
+              updateData.total_returned = totalReturned;
+              
+              // Log for debugging
+              console.log('Cleaned returned denominations:', {
+                original: requestData.denominations_returned,
+                cleaned: cleanedReturnedDenoms,
+                totalReturned
+              });
+            } else {
+              // No returned denominations provided, ensure empty object
+              updateData.denominations_returned = {};
+            }
+
+            // Calculate net amount based on the cleaned denomination totals
+            updateData.net_amount = updateData.total_received - updateData.total_returned;
+
+            // CRITICAL: Set payer_amount to match net_amount to ensure consistency
+            updateData.payer_amount = updateData.net_amount;
+
+            // Log calculation results
+            console.log('Final denomination calculations:', {
+              totalReceived: updateData.total_received,
+              totalReturned: updateData.total_returned,
+              netAmount: updateData.net_amount,
+              payerAmount: updateData.payer_amount
+            });
           } catch (error) {
-            console.error('Error calculating denomination totals during update:', error);
+            console.error('Error processing denominations:', error);
             next(new ErrorResponse('Error processing denomination data', 400));
             return;
           }
-        } else if (updateData.payer_amount !== undefined && updateData.payer_amount !== null) {
+        } else if (updateData.payer_amount !== undefined) {
           // If only payer_amount is being updated without denominations
-          // Check if the payer already has denominations
-          const existingHasDenoms = payer!.denominations_received &&
-            Object.keys(payer!.denominations_received).some((key: string) =>
-              (payer!.denominations_received as any)[key] > 0
-            );
-
-          if (!existingHasDenoms) {
-            // No existing denominations, update totals based on new payer_amount
-            updateData.net_amount = updateData.payer_amount;
-            updateData.total_received = updateData.payer_amount;
-            updateData.total_returned = 0;
-          } else {
-            // Has existing denominations, validate against them
-            const existingNetAmount = (payer!.total_received || 0) - (payer!.total_returned || 0);
-            if (existingNetAmount !== updateData.payer_amount) {
-              next(new ErrorResponse('Payer amount does not match existing denomination calculations', 400));
-              return;
-            }
-          }
-        }
-
-        // Clear empty denomination objects to prevent issues
-        if (updateData.denominations_received &&
-          Object.keys(updateData.denominations_received).length === 0) {
-          delete updateData.denominations_received;
-        }
-        if (updateData.denominations_returned &&
-          Object.keys(updateData.denominations_returned).length === 0) {
-          delete updateData.denominations_returned;
+          const numericAmount = Number(updateData.payer_amount);
+          
+          // Ensure all related fields are updated to match
+          updateData.net_amount = numericAmount;
+          updateData.total_received = numericAmount;
+          updateData.total_returned = 0;
+          
+          // Clear any existing denominations
+          updateData.denominations_received = {};
+          updateData.denominations_returned = {};
+          
+          console.log('Updated with amount only:', {
+            payerAmount: numericAmount
+          });
         }
       }
+
+      // Log the final data being sent to the database
+      console.log('Final update data:', JSON.stringify(updateData, null, 2));
 
       // Update payer
       payer = await Payer.findByIdAndUpdate(req.params.id, updateData, {
         new: true,
         runValidators: true
-      }).lean() as unknown as typeof payer;  // Use lean for better performance
+      }).lean() as unknown as typeof payer;
+
+      // Verify the update was successful
+      if (!payer) {
+        next(new ErrorResponse('Failed to update payer', 500));
+        return;
+      }
 
       // Calculate which fields were changed
       const changedFields = findChangedFields(beforeValue, sanitizeForEditLog(payer));

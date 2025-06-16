@@ -11,68 +11,68 @@ import { redisClient } from '../config/redis';
 // @access  Private
 export const getPaymentMethodDistribution = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const functionId = req.params.functionId;
-  
-    // Check if function exists
-    const functionExists = await Function.findOne({
-      function_id: functionId,
-      is_deleted: false
-    });
+    try {
+      const functionId = req.params.functionId;
+      
+      console.log(`Getting payment method distribution for function: ${functionId}`);
     
-    if (!functionExists) {
-      next(new ErrorResponse(`Function not found with id of ${functionId}`, 404));
-      return;
-    }
-    
-    // Cache key
-    const cacheKey = `api:functions:${functionId}:payment-methods`;
-    
-    // // Try to get from cache first
-    const cachedData = await redisClient.get(cacheKey);
-    if (cachedData) {
-      res.status(200).json(JSON.parse(cachedData));
-      return;
-    }
-    
-    // Aggregate payers by payment method
-    const paymentMethodDistribution = await Payer.aggregate([
-      {
-        $match: {
-          function_id: functionExists.function_id,
-          is_deleted: { $ne: true }
-        }
-      },
-      {
-        $group: {
-          _id: "$payer_cash_method",
-          count: { $sum: 1 },
-          total_amount: { $sum: "$payer_amount" }
-        }
-      },
-      {
-        $project: {
-          _id: 0,
-          payment_method: "$_id",
-          count: 1,
-          total_amount: 1
-        }
-      },
-      {
-        $sort: { total_amount: -1 }
+      // Check if function exists
+      const functionExists = await Function.findOne({
+        function_id: functionId,
+        is_deleted: false
+      });
+      
+      if (!functionExists) {
+        return next(new ErrorResponse(`Function not found with id of ${functionId}`, 404));
       }
-    ]);
-    
-    const response = {
-      success: true,
-      data: paymentMethodDistribution
-    };
-    
-    // Set cache (5 minutes)
-    await redisClient.set(cacheKey, JSON.stringify(response), {
-      EX: 300 // Expire in 300 seconds (5 minutes)
-    });
-    
-    res.status(200).json(response);
+      
+      // Get all payers for this function
+      const payers = await Payer.find({
+        function_id: functionExists.function_id,
+        is_deleted: { $ne: true }
+      }).lean();
+      
+      console.log(`Found ${payers.length} payers for function ID: ${functionId}`);
+      
+      // Process payers manually to handle null/empty values
+      const methodsMap = new Map();
+      
+      payers.forEach(payer => {
+        // Normalize the payment method - replace null/empty with "Other"
+        let method = payer.payer_cash_method;
+        if (!method || method === '') {
+          method = 'Other';
+        }
+        
+        // Initialize or update the entry
+        if (!methodsMap.has(method)) {
+          methodsMap.set(method, {
+            payment_method: method,
+            count: 1,
+            total_amount: payer.payer_amount || 0
+          });
+        } else {
+          const current = methodsMap.get(method);
+          current.count += 1;
+          current.total_amount += (payer.payer_amount || 0);
+          methodsMap.set(method, current);
+        }
+      });
+      
+      // Convert map to array and sort by total_amount
+      const paymentMethodDistribution = Array.from(methodsMap.values())
+        .sort((a, b) => b.total_amount - a.total_amount);
+      
+      console.log(`Processed ${paymentMethodDistribution.length} distinct payment methods`);
+      
+      res.status(200).json({
+        success: true,
+        data: paymentMethodDistribution
+      });
+    } catch (error) {
+      console.error('Error getting payment method distribution:', error);
+      next(new ErrorResponse('Failed to get payment method distribution', 500));
+    }
   }
 );
 

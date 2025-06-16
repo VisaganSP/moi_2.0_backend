@@ -136,6 +136,7 @@ JWT_EXPIRE=30d
 - **Get Functions by Date Range**: `GET /api/functions/date-range`
 - **Permanently Delete Function**: `DELETE /api/functions/:functionId/permanent`
 - **Get Function Denominations**: `GET /api/functions/:functionId/denominations`
+- **Get Function Payment Methods**: `GET /api/functions/:functionId/denominations-payment-methods`
 - **Bulk Soft Delete Functions**: `POST /api/functions/bulk-delete`
 - **Bulk Restore Functions**: `POST /api/functions/bulk-restore`
 - **Bulk Permanently Delete Functions**: `POST /api/functions/bulk-permanent-delete`

@@ -13,7 +13,8 @@ import {
   searchFunctions,
   bulkDeleteFunctions,
   bulkPermanentlyDeleteFunctions,
-  bulkRestoreFunctions
+  bulkRestoreFunctions,
+  getFunctionPaymentMethods
 } from '../controllers/function.controller';
 import { getPayersByFunction, getTotalPaymentByFunction, searchPayers } from '../controllers/payer.controller';
 import { protect, admin } from '../middleware/auth.middleware';
@@ -70,5 +71,6 @@ router.get('/:functionId/top-contributors', getTopContributors);
 
 // Denominations route
 router.get('/:functionId/denominations', getFunctionDenominations);
+router.get('/:functionId/denominations-payment-methods', getFunctionPaymentMethods);
 
 export default router;
