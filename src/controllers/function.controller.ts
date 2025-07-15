@@ -1,13 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import asyncHandler from 'express-async-handler';
-import Function from '../models/Function.model';
 import { ErrorResponse } from '../utils/errorResponse';
-import { AuthenticatedRequest } from '../types';
+import { AuthenticatedRequest, FunctionDocument, PayerDocument } from '../types';
 import { invalidateCacheByPattern } from '../utils/cacheUtils';
 import { findChangedFields, sanitizeForEditLog } from '../utils/editLogHelpers';
-import EditLog from '../models/EditLog.model';
-import Payer from '../models/Payer.model';
 import { FUNCTION_SEARCHABLE_FIELDS } from '../utils/constants';
+import { getOrganizationModel } from '../utils/dynamicCollections';
+import { checkFunctionLimit, incrementFunctionCount } from '../utils/subscriptionUtils';
 
 // @desc    Create a new function (Admin only)
 // @route   POST /api/functions
@@ -15,8 +14,30 @@ import { FUNCTION_SEARCHABLE_FIELDS } from '../utils/constants';
 export const createFunction = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // Add user id to request body
-      req.body.created_by = req.user?._id;
+      if (!req.user) {
+        next(new ErrorResponse('User not authenticated', 401));
+        return;
+      }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      const orgId = req.user.org_id;
+      
+      if (!orgName || !orgId) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+
+      // Check if the organization has reached its function limit
+      const limitReached = await checkFunctionLimit(req, next);
+      if (limitReached) {
+        return; // Stop execution if limit is reached
+      }
+
+      // Add user id and organization info to request body
+      req.body.created_by = req.user._id;
+      req.body.org_id = orgId;
+      req.body.org_name = orgName;
       
       // Generate the unique function_id based on the specified pattern
       // Format: function_name-function_owner_name-function_held_city-function_start_date-function_start_time
@@ -51,8 +72,14 @@ export const createFunction = asyncHandler(
       // Add the function_id to the request body
       req.body.function_id = function_id;
       
-      // Create function with the added function_id
-      const functionObj = await Function.create(req.body);
+      // Get the organization-specific Function model
+      const FunctionModel = getOrganizationModel<FunctionDocument>(orgName, 'functions');
+      
+      // Create function with the added function_id in the organization-specific collection
+      const functionObj = await FunctionModel.create(req.body);
+
+      // Increment the functions_created counter for the organization
+      await incrementFunctionCount(req);
 
       // Invalidate cache
       await invalidateCacheByPattern('api:/functions*');
@@ -77,67 +104,92 @@ export const createFunction = asyncHandler(
 // @route   GET /api/functions
 // @access  Private
 export const getFunctions = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    // Invalidate cache to ensure fresh data
-    await invalidateCacheByPattern('api:/functions*');
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!req.user) {
+        next(new ErrorResponse('User not authenticated', 401));
+        return;
+      }
 
-    // Build query
-    const query: any = { is_deleted: false };
-    
-    // Add search functionality
-    if (req.query.search) {
-      query.function_name = { $regex: req.query.search, $options: 'i' };
-    }
-
-    console.log('Query for functions:', JSON.stringify(query));
-
-    // Get total count BEFORE pagination
-    const total = await Function.countDocuments(query);
-    console.log('Total functions found:', total);
-
-    // Add pagination if requested
-    let functions;
-    if (req.query.page || req.query.limit) {
-      // Parse pagination parameters
-      const page = parseInt(req.query.page as string, 10) || 1;
-      const limit = parseInt(req.query.limit as string, 10) || 10;
-      const startIndex = (page - 1) * limit;
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
       
-      // Execute query with pagination
-      functions = await Function.find(query)
-        .sort({ created_at: -1 })
-        .skip(startIndex)
-        .limit(limit)
-        .lean(); // Use lean for performance
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+      
+      // Invalidate cache to ensure fresh data
+      await invalidateCacheByPattern('api:/functions*');
+
+      // Get the organization-specific Function model
+      const FunctionModel = getOrganizationModel<FunctionDocument>(orgName, 'functions');
+
+      // Build query
+      const query: any = { is_deleted: false };
+      
+      // Add search functionality
+      if (req.query.search) {
+        query.function_name = { $regex: req.query.search, $options: 'i' };
+      }
+
+      console.log('Query for functions:', JSON.stringify(query));
+
+      // Get total count BEFORE pagination
+      const total = await FunctionModel.countDocuments(query);
+      console.log('Total functions found:', total);
+
+      // Add pagination if requested
+      let functions;
+      if (req.query.page || req.query.limit) {
+        // Parse pagination parameters
+        const page = parseInt(req.query.page as string, 10) || 1;
+        const limit = parseInt(req.query.limit as string, 10) || 10;
+        const startIndex = (page - 1) * limit;
         
-      console.log(`Found ${functions.length} functions after pagination`);
-      
-      // Pagination result
-      const pagination = {
-        current: page,
-        pages: Math.ceil(total / limit),
-        total
-      };
-      
-      res.status(200).json({
-        success: true,
-        count: functions.length,
-        pagination,
-        data: functions
-      });
-    } else {
-      // No pagination, return all results
-      functions = await Function.find(query)
-        .sort({ created_at: -1 })
-        .lean(); // Use lean for performance
-      
-      console.log(`Found ${functions.length} functions total (no pagination)`);
-      
-      res.status(200).json({
-        success: true,
-        count: functions.length,
-        data: functions
-      });
+        // Execute query with pagination
+        functions = await FunctionModel.find(query)
+          .sort({ created_at: -1 })
+          .skip(startIndex)
+          .limit(limit)
+          .lean(); // Use lean for performance
+          
+        console.log(`Found ${functions.length} functions after pagination`);
+        
+        // Pagination result
+        const pagination = {
+          current: page,
+          pages: Math.ceil(total / limit),
+          total
+        };
+        
+        res.status(200).json({
+          success: true,
+          count: functions.length,
+          pagination,
+          data: functions
+        });
+      } else {
+        // No pagination, return all results
+        functions = await FunctionModel.find(query)
+          .sort({ created_at: -1 })
+          .lean(); // Use lean for performance
+        
+        console.log(`Found ${functions.length} functions total (no pagination)`);
+        
+        res.status(200).json({
+          success: true,
+          count: functions.length,
+          data: functions
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching functions:', error);
+      if (error instanceof Error) {
+        next(new ErrorResponse(`Failed to fetch functions: ${error.message}`, 500));
+      } else {
+        next(new ErrorResponse('Failed to fetch functions due to an unknown error', 500));
+      }
     }
   }
 );
@@ -146,22 +198,47 @@ export const getFunctions = asyncHandler(
 // @route   GET /api/functions/:id
 // @access  Private
 export const getFunctionById = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    // Use function_id instead of _id
-    const functionObj = await Function.findOne({
-      function_id: req.params.id,
-      is_deleted: false
-    });
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!req.user) {
+        next(new ErrorResponse('User not authenticated', 401));
+        return;
+      }
 
-    if (!functionObj) {
-      next(new ErrorResponse('Function not found', 404));
-      return;
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+      
+      // Get the organization-specific Function model
+      const FunctionModel = getOrganizationModel(orgName, 'functions');
+      
+      // Use function_id instead of _id
+      const functionObj = await FunctionModel.findOne({
+        function_id: req.params.id,
+        is_deleted: false
+      });
+
+      if (!functionObj) {
+        next(new ErrorResponse('Function not found', 404));
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: functionObj
+      });
+    } catch (error) {
+      console.error('Error fetching function:', error);
+      if (error instanceof Error) {
+        next(new ErrorResponse(`Failed to fetch function: ${error.message}`, 500));
+      } else {
+        next(new ErrorResponse('Failed to fetch function due to an unknown error', 500));
+      }
     }
-
-    res.status(200).json({
-      success: true,
-      data: functionObj
-    });
   }
 );
 
@@ -170,66 +247,95 @@ export const getFunctionById = asyncHandler(
 // @access  Private/Admin
 export const updateFunction = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
-    // Extract reason_for_edit from request body
-    const { reason_for_edit, ...updateData } = req.body;
-    
-    // Validate reason for edit
-    if (!reason_for_edit) {
-      next(new ErrorResponse('Reason for edit is required', 400));
-      return;
+    try {
+      if (!req.user) {
+        next(new ErrorResponse('User not authenticated', 401));
+        return;
+      }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      const orgId = req.user.org_id;
+      
+      if (!orgName || !orgId) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+      
+      // Get the organization-specific Function and EditLog models
+      const FunctionModel = getOrganizationModel<FunctionDocument>(orgName, 'functions');
+      const EditLogModel = getOrganizationModel(orgName, 'edit_logs');
+      
+      // Extract reason_for_edit from request body
+      const { reason_for_edit, ...updateData } = req.body;
+      
+      // Validate reason for edit
+      if (!reason_for_edit) {
+        next(new ErrorResponse('Reason for edit is required', 400));
+        return;
+      }
+
+      // Find by function_id instead of _id
+      let functionObj = await FunctionModel.findOne({
+        function_id: req.params.id,
+        is_deleted: false
+      });
+
+      if (!functionObj) {
+        next(new ErrorResponse('Function not found', 404));
+        return;
+      }
+
+      // Store the original state for edit log
+      const beforeValue = sanitizeForEditLog(functionObj.toObject());
+
+      // Do not allow updating the function_id itself
+      if (updateData.function_id) {
+        delete updateData.function_id;
+      }
+
+      // Update function using its MongoDB _id
+      functionObj = await FunctionModel.findByIdAndUpdate(functionObj._id, updateData, {
+        new: true,
+        runValidators: true
+      });
+
+      // Calculate which fields were changed
+      const changedFields = findChangedFields(beforeValue, sanitizeForEditLog(functionObj!.toObject()));
+
+      // Create edit log in the organization-specific edit_logs collection
+      await EditLogModel.create({
+        target_id: functionObj!._id,
+        target_type: 'Function',
+        action: 'update',
+        before_value: beforeValue,
+        after_value: sanitizeForEditLog(functionObj!.toObject()),
+        reason: reason_for_edit,
+        changed_fields: changedFields,
+        created_by: req.user._id,
+        user_email: req.user.email,
+        user_name: req.user.username,
+        org_id: orgId,
+        org_name: orgName
+      });
+
+      // Invalidate cache
+      await invalidateCacheByPattern('api:/functions*');
+      await invalidateCacheByPattern(`api:/functions/${req.params.id}`);
+      await invalidateCacheByPattern('api:/edit-logs*');
+
+      res.status(200).json({
+        success: true,
+        data: functionObj
+      });
+    } catch (error) {
+      console.error('Error updating function:', error);
+      if (error instanceof Error) {
+        next(new ErrorResponse(`Failed to update function: ${error.message}`, 500));
+      } else {
+        next(new ErrorResponse('Failed to update function due to an unknown error', 500));
+      }
     }
-
-    // Find by function_id instead of _id
-    let functionObj = await Function.findOne({
-      function_id: req.params.id,
-      is_deleted: false
-    });
-
-    if (!functionObj) {
-      next(new ErrorResponse('Function not found', 404));
-      return;
-    }
-
-    // Store the original state for edit log
-    const beforeValue = sanitizeForEditLog(functionObj.toObject());
-
-    // Do not allow updating the function_id itself
-    if (updateData.function_id) {
-      delete updateData.function_id;
-    }
-
-    // Update function using its MongoDB _id
-    functionObj = await Function.findByIdAndUpdate(functionObj._id, updateData, {
-      new: true,
-      runValidators: true
-    });
-
-    // Calculate which fields were changed
-    const changedFields = findChangedFields(beforeValue, sanitizeForEditLog(functionObj!.toObject()));
-
-    // Create edit log
-    await EditLog.create({
-      target_id: functionObj!._id,
-      target_type: 'Function',
-      action: 'update',
-      before_value: beforeValue,
-      after_value: sanitizeForEditLog(functionObj!.toObject()),
-      reason: reason_for_edit,
-      changed_fields: changedFields,
-      created_by: req.user?._id,
-      user_email: req.user?.email,
-      user_name: req.user?.username
-    });
-
-    // Invalidate cache
-    await invalidateCacheByPattern('api:/functions*');
-    await invalidateCacheByPattern(`api:/functions/${req.params.id}`);
-    await invalidateCacheByPattern('api:/edit-logs*');
-
-    res.status(200).json({
-      success: true,
-      data: functionObj
-    });
   }
 );
 
@@ -238,30 +344,55 @@ export const updateFunction = asyncHandler(
 // @access  Private/Admin
 export const deleteFunction = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
-    // Find by function_id instead of _id
-    const functionObj = await Function.findOne({
-      function_id: req.params.id,
-      is_deleted: false
-    });
+    try {
+      if (!req.user) {
+        next(new ErrorResponse('User not authenticated', 401));
+        return;
+      }
 
-    if (!functionObj) {
-      next(new ErrorResponse('Function not found', 404));
-      return;
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+      
+      // Get the organization-specific Function model
+      const FunctionModel = getOrganizationModel(orgName, 'functions');
+      
+      // Find by function_id instead of _id
+      const functionObj = await FunctionModel.findOne({
+        function_id: req.params.id,
+        is_deleted: false
+      });
+
+      if (!functionObj) {
+        next(new ErrorResponse('Function not found', 404));
+        return;
+      }
+
+      // Soft delete
+      functionObj.is_deleted = true;
+      functionObj.deleted_at = new Date();
+      await functionObj.save();
+
+      // Invalidate cache
+      await invalidateCacheByPattern('api:/functions*');
+      await invalidateCacheByPattern(`api:/functions/${req.params.id}`);
+
+      res.status(200).json({
+        success: true,
+        data: {}
+      });
+    } catch (error) {
+      console.error('Error deleting function:', error);
+      if (error instanceof Error) {
+        next(new ErrorResponse(`Failed to delete function: ${error.message}`, 500));
+      } else {
+        next(new ErrorResponse('Failed to delete function due to an unknown error', 500));
+      }
     }
-
-    // Soft delete
-    functionObj.is_deleted = true;
-    functionObj.deleted_at = new Date();
-    await functionObj.save();
-
-    // Invalidate cache
-    await invalidateCacheByPattern('api:/functions*');
-    await invalidateCacheByPattern(`api:/functions/${req.params.id}`);
-
-    res.status(200).json({
-      success: true,
-      data: {}
-    });
   }
 );
 
@@ -270,30 +401,55 @@ export const deleteFunction = asyncHandler(
 // @access  Private/Admin
 export const restoreFunction = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
-    // Find by function_id instead of _id
-    const functionObj = await Function.findOne({
-      function_id: req.params.id,
-      is_deleted: true
-    });
+    try {
+      if (!req.user) {
+        next(new ErrorResponse('User not authenticated', 401));
+        return;
+      }
 
-    if (!functionObj) {
-      next(new ErrorResponse('Function not found or not deleted', 404));
-      return;
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+      
+      // Get the organization-specific Function model
+      const FunctionModel = getOrganizationModel(orgName, 'functions');
+      
+      // Find by function_id instead of _id
+      const functionObj = await FunctionModel.findOne({
+        function_id: req.params.id,
+        is_deleted: true
+      });
+
+      if (!functionObj) {
+        next(new ErrorResponse('Function not found or not deleted', 404));
+        return;
+      }
+
+      // Restore function
+      functionObj.is_deleted = false;
+      functionObj.deleted_at = undefined;
+      await functionObj.save();
+
+      // Invalidate cache
+      await invalidateCacheByPattern('api:/functions*');
+      await invalidateCacheByPattern(`api:/functions/${req.params.id}`);
+
+      res.status(200).json({
+        success: true,
+        data: functionObj
+      });
+    } catch (error) {
+      console.error('Error restoring function:', error);
+      if (error instanceof Error) {
+        next(new ErrorResponse(`Failed to restore function: ${error.message}`, 500));
+      } else {
+        next(new ErrorResponse('Failed to restore function due to an unknown error', 500));
+      }
     }
-
-    // Restore function
-    functionObj.is_deleted = false;
-    functionObj.deleted_at = undefined;
-    await functionObj.save();
-
-    // Invalidate cache
-    await invalidateCacheByPattern('api:/functions*');
-    await invalidateCacheByPattern(`api:/functions/${req.params.id}`);
-
-    res.status(200).json({
-      success: true,
-      data: functionObj
-    });
   }
 );
 
@@ -301,62 +457,87 @@ export const restoreFunction = asyncHandler(
 // @route   GET /api/functions/deleted
 // @access  Private/Admin
 export const getDeletedFunctions = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    // Invalidate cache to ensure fresh data
-    await invalidateCacheByPattern('api:/functions/deleted*');
-    
-    // Build query for deleted functions
-    const query = { is_deleted: true };
-    
-    console.log('Query for deleted functions:', JSON.stringify(query));
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!req.user) {
+        next(new ErrorResponse('User not authenticated', 401));
+        return;
+      }
 
-    // Get total count BEFORE pagination
-    const total = await Function.countDocuments(query);
-    console.log('Total deleted functions found:', total);
-
-    // Add pagination if requested
-    let functions;
-    if (req.query.page || req.query.limit) {
-      // Parse pagination parameters
-      const page = parseInt(req.query.page as string, 10) || 1;
-      const limit = parseInt(req.query.limit as string, 10) || 10;
-      const startIndex = (page - 1) * limit;
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
       
-      // Execute query with pagination
-      functions = await Function.find(query)
-        .sort({ deleted_at: -1 })
-        .skip(startIndex)
-        .limit(limit)
-        .lean(); // Use lean for performance
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+      
+      // Get the organization-specific Function model
+      const FunctionModel = getOrganizationModel(orgName, 'functions');
+      
+      // Invalidate cache to ensure fresh data
+      await invalidateCacheByPattern('api:/functions/deleted*');
+      
+      // Build query for deleted functions
+      const query = { is_deleted: true };
+      
+      console.log('Query for deleted functions:', JSON.stringify(query));
+
+      // Get total count BEFORE pagination
+      const total = await FunctionModel.countDocuments(query);
+      console.log('Total deleted functions found:', total);
+
+      // Add pagination if requested
+      let functions;
+      if (req.query.page || req.query.limit) {
+        // Parse pagination parameters
+        const page = parseInt(req.query.page as string, 10) || 1;
+        const limit = parseInt(req.query.limit as string, 10) || 10;
+        const startIndex = (page - 1) * limit;
         
-      console.log(`Found ${functions.length} deleted functions after pagination`);
-      
-      // Pagination result
-      const pagination = {
-        current: page,
-        pages: Math.ceil(total / limit),
-        total
-      };
-      
-      res.status(200).json({
-        success: true,
-        count: functions.length,
-        pagination,
-        data: functions
-      });
-    } else {
-      // No pagination, return all results
-      functions = await Function.find(query)
-        .sort({ deleted_at: -1 })
-        .lean(); // Use lean for performance
-      
-      console.log(`Found ${functions.length} deleted functions total (no pagination)`);
-      
-      res.status(200).json({
-        success: true,
-        count: functions.length,
-        data: functions
-      });
+        // Execute query with pagination
+        functions = await FunctionModel.find(query)
+          .sort({ deleted_at: -1 })
+          .skip(startIndex)
+          .limit(limit)
+          .lean(); // Use lean for performance
+          
+        console.log(`Found ${functions.length} deleted functions after pagination`);
+        
+        // Pagination result
+        const pagination = {
+          current: page,
+          pages: Math.ceil(total / limit),
+          total
+        };
+        
+        res.status(200).json({
+          success: true,
+          count: functions.length,
+          pagination,
+          data: functions
+        });
+      } else {
+        // No pagination, return all results
+        functions = await FunctionModel.find(query)
+          .sort({ deleted_at: -1 })
+          .lean(); // Use lean for performance
+        
+        console.log(`Found ${functions.length} deleted functions total (no pagination)`);
+        
+        res.status(200).json({
+          success: true,
+          count: functions.length,
+          data: functions
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching deleted functions:', error);
+      if (error instanceof Error) {
+        next(new ErrorResponse(`Failed to fetch deleted functions: ${error.message}`, 500));
+      } else {
+        next(new ErrorResponse('Failed to fetch deleted functions due to an unknown error', 500));
+      }
     }
   }
 );
@@ -365,72 +546,97 @@ export const getDeletedFunctions = asyncHandler(
 // @route   GET /api/functions/date-range
 // @access  Private
 export const getFunctionsByDateRange = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const { startDate, endDate } = req.query;
-    
-    if (!startDate || !endDate) {
-      next(new ErrorResponse('Please provide start and end dates', 400));
-      return;
-    }
-
-    // Build query
-    const query: any = { 
-      is_deleted: false,
-      function_start_date: { 
-        $gte: new Date(startDate as string),
-        $lte: new Date(endDate as string)
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!req.user) {
+        next(new ErrorResponse('User not authenticated', 401));
+        return;
       }
-    };
 
-    console.log('Query for date range:', JSON.stringify(query));
-
-    // Get total count BEFORE pagination
-    const total = await Function.countDocuments(query);
-    console.log('Total functions in date range:', total);
-
-    // Add pagination if requested
-    let functions;
-    if (req.query.page || req.query.limit) {
-      // Parse pagination parameters
-      const page = parseInt(req.query.page as string, 10) || 1;
-      const limit = parseInt(req.query.limit as string, 10) || 10;
-      const startIndex = (page - 1) * limit;
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
       
-      // Execute query with pagination
-      functions = await Function.find(query)
-        .sort({ function_start_date: 1 })
-        .skip(startIndex)
-        .limit(limit)
-        .lean(); // Use lean for performance
-        
-      console.log(`Found ${functions.length} functions in date range after pagination`);
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
       
-      // Pagination result
-      const pagination = {
-        current: page,
-        pages: Math.ceil(total / limit),
-        total
+      // Get the organization-specific Function model
+      const FunctionModel = getOrganizationModel(orgName, 'functions');
+      
+      const { startDate, endDate } = req.query;
+      
+      if (!startDate || !endDate) {
+        next(new ErrorResponse('Please provide start and end dates', 400));
+        return;
+      }
+
+      // Build query
+      const query: any = { 
+        is_deleted: false,
+        function_start_date: { 
+          $gte: new Date(startDate as string),
+          $lte: new Date(endDate as string)
+        }
       };
-      
-      res.status(200).json({
-        success: true,
-        count: functions.length,
-        pagination,
-        data: functions
-      });
-    } else {
-      // No pagination, return all results
-      functions = await Function.find(query)
-        .sort({ function_start_date: 1 })
-        .lean(); // Use lean for performance
-      
-      console.log(`Found ${functions.length} functions in date range (no pagination)`);
-      
-      res.status(200).json({
-        success: true,
-        count: functions.length,
-        data: functions
-      });
+
+      console.log('Query for date range:', JSON.stringify(query));
+
+      // Get total count BEFORE pagination
+      const total = await FunctionModel.countDocuments(query);
+      console.log('Total functions in date range:', total);
+
+      // Add pagination if requested
+      let functions;
+      if (req.query.page || req.query.limit) {
+        // Parse pagination parameters
+        const page = parseInt(req.query.page as string, 10) || 1;
+        const limit = parseInt(req.query.limit as string, 10) || 10;
+        const startIndex = (page - 1) * limit;
+        
+        // Execute query with pagination
+        functions = await FunctionModel.find(query)
+          .sort({ function_start_date: 1 })
+          .skip(startIndex)
+          .limit(limit)
+          .lean(); // Use lean for performance
+          
+        console.log(`Found ${functions.length} functions in date range after pagination`);
+        
+        // Pagination result
+        const pagination = {
+          current: page,
+          pages: Math.ceil(total / limit),
+          total
+        };
+        
+        res.status(200).json({
+          success: true,
+          count: functions.length,
+          pagination,
+          data: functions
+        });
+      } else {
+        // No pagination, return all results
+        functions = await FunctionModel.find(query)
+          .sort({ function_start_date: 1 })
+          .lean(); // Use lean for performance
+        
+        console.log(`Found ${functions.length} functions in date range (no pagination)`);
+        
+        res.status(200).json({
+          success: true,
+          count: functions.length,
+          data: functions
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching functions by date range:', error);
+      if (error instanceof Error) {
+        next(new ErrorResponse(`Failed to fetch functions by date range: ${error.message}`, 500));
+      } else {
+        next(new ErrorResponse('Failed to fetch functions by date range due to an unknown error', 500));
+      }
     }
   }
 );
@@ -440,32 +646,57 @@ export const getFunctionsByDateRange = asyncHandler(
 // @access  Private/Admin
 export const permanentlyDeleteFunction = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
-    // Find by function_id instead of _id
-    const functionObj = await Function.findOne({
-      function_id: req.params.id,
-      is_deleted: true
-    });
+    try {
+      if (!req.user) {
+        next(new ErrorResponse('User not authenticated', 401));
+        return;
+      }
 
-    if (!functionObj) {
-      next(new ErrorResponse('Function not found or is not soft-deleted', 404));
-      return;
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+      
+      // Get the organization-specific Function model
+      const FunctionModel = getOrganizationModel(orgName, 'functions');
+      
+      // Find by function_id instead of _id
+      const functionObj = await FunctionModel.findOne({
+        function_id: req.params.id,
+        is_deleted: true
+      });
+
+      if (!functionObj) {
+        next(new ErrorResponse('Function not found or is not soft-deleted', 404));
+        return;
+      }
+
+      // Save the function_id for cache invalidation
+      const functionId = functionObj.function_id;
+
+      // Permanent delete using MongoDB _id
+      await FunctionModel.findByIdAndDelete(functionObj._id);
+
+      // Invalidate cache
+      await invalidateCacheByPattern('api:/functions*');
+      await invalidateCacheByPattern(`api:/functions/${functionId}`);
+
+      res.status(200).json({
+        success: true,
+        data: {},
+        message: 'Function permanently deleted'
+      });
+    } catch (error) {
+      console.error('Error permanently deleting function:', error);
+      if (error instanceof Error) {
+        next(new ErrorResponse(`Failed to permanently delete function: ${error.message}`, 500));
+      } else {
+        next(new ErrorResponse('Failed to permanently delete function due to an unknown error', 500));
+      }
     }
-
-    // Save the function_id for cache invalidation
-    const functionId = functionObj.function_id;
-
-    // Permanent delete using MongoDB _id
-    await Function.findByIdAndDelete(functionObj._id);
-
-    // Invalidate cache
-    await invalidateCacheByPattern('api:/functions*');
-    await invalidateCacheByPattern(`api:/functions/${functionId}`);
-
-    res.status(200).json({
-      success: true,
-      data: {},
-      message: 'Function permanently deleted'
-    });
   }
 );
 
@@ -473,14 +704,30 @@ export const permanentlyDeleteFunction = asyncHandler(
 // @route   GET /api/functions/:functionId/denominations
 // @access  Private
 export const getFunctionDenominations = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      if (!req.user) {
+        next(new ErrorResponse('User not authenticated', 401));
+        return;
+      }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+      
+      // Get the organization-specific Function and Payer models
+      const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+      
       const functionId = req.params.functionId;
       
       console.log(`Generating denomination summary for function: ${functionId}`);
       
       // Get all payers for this function that are not deleted and involve cash
-      const payers = await Payer.find({ 
+      const payers = await PayerModel.find({ 
         function_id: functionId,
         payer_given_object: 'Cash',
         is_deleted: false 
@@ -567,8 +814,24 @@ export const getFunctionDenominations = asyncHandler(
 // @route   GET /api/functions/search
 // @access  Private
 export const searchFunctions = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      if (!req.user) {
+        next(new ErrorResponse('User not authenticated', 401));
+        return;
+      }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+      
+      // Get the organization-specific Function model
+      const FunctionModel = getOrganizationModel(orgName, 'functions');
+      
       // Extract query parameters with type assertions
       const searchParam = req.query.searchParam as string;
       const searchQuery = req.query.searchQuery as string;
@@ -695,13 +958,13 @@ export const searchFunctions = asyncHandler(
 
       // Execute search with count in parallel
       const [functions, totalCount] = await Promise.all([
-        Function.find(query)
+        FunctionModel.find(query)
           .sort(sortObject)
           .limit(limitNum)
           .skip(skip)
           .lean()
           .exec(),
-        Function.countDocuments(query)
+        FunctionModel.countDocuments(query)
       ]);
 
       // Calculate pagination metadata
@@ -745,6 +1008,22 @@ export const searchFunctions = asyncHandler(
 export const bulkDeleteFunctions = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      if (!req.user) {
+        next(new ErrorResponse('User not authenticated', 401));
+        return;
+      }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+      
+      // Get the organization-specific Function model
+      const FunctionModel = getOrganizationModel(orgName, 'functions');
+      
       const { function_ids } = req.body;
       
       // Validate input
@@ -754,7 +1033,7 @@ export const bulkDeleteFunctions = asyncHandler(
       }
 
       // Find all functions that are not already deleted
-      const functionsToDelete = await Function.find({
+      const functionsToDelete = await FunctionModel.find({
         function_id: { $in: function_ids },
         is_deleted: false
       });
@@ -778,7 +1057,7 @@ export const bulkDeleteFunctions = asyncHandler(
       }));
 
       // Execute bulk update
-      const result = await Function.bulkWrite(bulkOps);
+      const result = await FunctionModel.bulkWrite(bulkOps);
 
       // Get the list of successfully deleted function_ids
       const deletedFunctionIds = functionsToDelete.map(func => func.function_id);
@@ -811,6 +1090,22 @@ export const bulkDeleteFunctions = asyncHandler(
 export const bulkRestoreFunctions = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      if (!req.user) {
+        next(new ErrorResponse('User not authenticated', 401));
+        return;
+      }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+      
+      // Get the organization-specific Function model
+      const FunctionModel = getOrganizationModel(orgName, 'functions');
+      
       const { function_ids } = req.body;
       
       // Validate input
@@ -820,7 +1115,7 @@ export const bulkRestoreFunctions = asyncHandler(
       }
 
       // Find all functions that are deleted
-      const functionsToRestore = await Function.find({
+      const functionsToRestore = await FunctionModel.find({
         function_id: { $in: function_ids },
         is_deleted: true
       });
@@ -846,7 +1141,7 @@ export const bulkRestoreFunctions = asyncHandler(
       }));
 
       // Execute bulk update
-      const result = await Function.bulkWrite(bulkOps);
+      const result = await FunctionModel.bulkWrite(bulkOps);
 
       // Get the list of successfully restored function_ids
       const restoredFunctionIds = functionsToRestore.map(func => func.function_id);
@@ -879,6 +1174,23 @@ export const bulkRestoreFunctions = asyncHandler(
 export const bulkPermanentlyDeleteFunctions = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      if (!req.user) {
+        next(new ErrorResponse('User not authenticated', 401));
+        return;
+      }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+      
+      // Get the organization-specific Function and Payer models
+      const FunctionModel = getOrganizationModel<FunctionDocument>(orgName, 'functions');
+      const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+      
       const { function_ids } = req.body;
       
       // Validate input
@@ -888,7 +1200,7 @@ export const bulkPermanentlyDeleteFunctions = asyncHandler(
       }
 
       // Find all functions that are soft-deleted
-      const functionsToDelete = await Function.find({
+      const functionsToDelete = await FunctionModel.find({
         function_id: { $in: function_ids },
         is_deleted: true
       });
@@ -904,12 +1216,12 @@ export const bulkPermanentlyDeleteFunctions = asyncHandler(
       const notFoundIds = function_ids.filter(id => !deletedFunctionIds.includes(id));
 
       // Permanently delete the functions
-      const result = await Function.deleteMany({
+      const result = await FunctionModel.deleteMany({
         _id: { $in: mongoIds }
       });
 
       // Also delete associated payers if needed (optional - depends on business logic)
-      // await Payer.deleteMany({ function_id: { $in: deletedFunctionIds } });
+      // await PayerModel.deleteMany({ function_id: { $in: deletedFunctionIds } });
 
       // Invalidate cache for all affected functions
       await invalidateCacheByPattern('api:/functions*');
@@ -937,14 +1249,30 @@ export const bulkPermanentlyDeleteFunctions = asyncHandler(
 // @route   GET /api/functions/:functionId/payment-methods
 // @access  Private
 export const getFunctionPaymentMethods = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      if (!req.user) {
+        next(new ErrorResponse('User not authenticated', 401));
+        return;
+      }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+      
+      // Get the organization-specific Payer model
+      const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+      
       const functionId = req.params.functionId;
       
       console.log(`Generating payment methods summary for function: ${functionId}`);
       
       // First, get all payers to check for denominations
-      const allPayers = await Payer.find({
+      const allPayers = await PayerModel.find({
         function_id: functionId,
         is_deleted: false
       }).lean();

@@ -1,6 +1,26 @@
 import mongoose, { Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { UserDocument } from '../types';
+import { UserDocument, ActiveSession } from '../types';
+
+// Define the ActiveSession schema
+const ActiveSessionSchema: Schema = new Schema({
+  token: {
+    type: String,
+    required: true
+  },
+  device_info: {
+    type: String,
+    required: true
+  },
+  ip_address: {
+    type: String,
+    required: true
+  },
+  last_active: {
+    type: Date,
+    default: Date.now
+  }
+}, { _id: false }); // No need for separate ID for embedded document
 
 const UserSchema: Schema = new Schema(
   {
@@ -29,10 +49,33 @@ const UserSchema: Schema = new Schema(
     isAdmin: {
       type: Boolean,
       default: false
+    },
+    // New fields for multi-tenant architecture
+    isSuperAdmin: {
+      type: Boolean,
+      default: false
+    },
+    org_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
+      required: [true, 'Organization ID is required']
+    },
+    org_name: {
+      type: String,
+      required: [true, 'Organization name is required'],
+      trim: true
+    },
+    // For one-user-one-session functionality
+    active_session: {
+      type: ActiveSessionSchema,
+      default: null
     }
   },
   { timestamps: true }
 );
+
+// Compound index for org_name + email to ensure uniqueness per organization
+UserSchema.index({ org_name: 1, email: 1 }, { unique: true });
 
 // Hash password before saving
 UserSchema.pre<UserDocument>('save', async function (next) {

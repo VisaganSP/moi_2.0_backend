@@ -1,11 +1,23 @@
 import { Request } from 'express';
 import { Document, Types } from 'mongoose';
 
+// Add interface for active session
+export interface ActiveSession {
+  token: string;
+  device_info: string;
+  ip_address: string;
+  last_active: Date;
+}
+
 export interface UserDocument extends Document {
   username: string;
   email: string;
   password: string;
   isAdmin: boolean;
+  isSuperAdmin: boolean; // Added for superadmin role
+  org_id: Types.ObjectId; // Added for multi-tenancy
+  org_name: string; // Added for multi-tenancy
+  active_session?: ActiveSession; // Added for session tracking
   createdAt: Date;
   updatedAt: Date;
   matchPassword(enteredPassword: string): Promise<boolean>;
@@ -13,6 +25,23 @@ export interface UserDocument extends Document {
 
 export interface AuthenticatedRequest extends Request {
   user?: UserDocument;
+  organization?: OrganizationDocument; // Added for multi-tenancy
+}
+
+// Added for organization management
+export interface OrganizationDocument extends Document {
+  org_id: string;
+  org_name: string;
+  display_name: string;
+  settings: {
+    logo_url?: string;
+    primary_color?: string;
+    allow_multiple_sessions: boolean;
+    session_timeout_minutes: number;
+  };
+  created_by?: Types.ObjectId;
+  created_at: Date;
+  updated_at: Date;
 }
 
 export interface FunctionDocument extends Document {
@@ -41,6 +70,8 @@ export interface FunctionDocument extends Document {
     function_city: string;
   };
   created_by: Types.ObjectId;
+  org_id?: Types.ObjectId; // Added for multi-tenancy
+  org_name?: string; // Added for multi-tenancy
   is_deleted: boolean;
   deleted_at?: Date;
   created_at: Date;
@@ -92,6 +123,8 @@ export interface PayerDocument extends Document {
   total_returned: number;
   net_amount: number;
   created_by: Types.ObjectId;
+  org_id?: Types.ObjectId; // Added for multi-tenancy
+  org_name?: string; // Added for multi-tenancy
   is_deleted: boolean;
   deleted_at?: Date;
   created_at: Date;
@@ -104,6 +137,8 @@ export interface PayerProfileDocument extends Document {
   payer_work: string;
   payer_city: string;
   payer_address: string;
+  org_id?: Types.ObjectId; // Added for multi-tenancy
+  org_name?: string; // Added for multi-tenancy
   functions_contributed: Array<{
     function_id: Types.ObjectId;
     function_name: string;
@@ -113,11 +148,11 @@ export interface PayerProfileDocument extends Document {
   last_updated: Date;
 }
 
-// Add EditLog document interface
+// Updated EditLog document interface
 export interface EditLogDocument extends Document {
   target_id: Types.ObjectId;
-  target_type: 'Function' | 'Payer';
-  action: 'update' | 'delete' | 'restore';
+  target_type: 'Function' | 'Payer' | 'Organization' | 'User'; // Added Organization and User
+  action: 'update' | 'delete' | 'restore' | 'promote_to_superadmin' | 'demote_from_superadmin'; // Added superadmin actions
   before_value: any;
   after_value: any;
   reason: string;
@@ -125,5 +160,19 @@ export interface EditLogDocument extends Document {
   created_by: Types.ObjectId;
   user_email: string;
   user_name: string;
+  org_id?: Types.ObjectId; // Added for multi-tenancy
+  org_name?: string; // Added for multi-tenancy
   created_at: Date;
+}
+
+// Added for organization search
+export interface OrganizationSearchParams extends SearchParams {
+  created_by?: string;
+}
+
+// Added for bulk operations on organizations
+export interface BulkOperationResult {
+  processed: string[];
+  notFound: string[];
+  count: number;
 }
