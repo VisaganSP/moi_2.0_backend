@@ -1279,27 +1279,87 @@ export const getFunctionPaymentMethods = asyncHandler(
       
       console.log(`Found ${allPayers.length} total payers for function ID: ${functionId}`);
       
-      // Filter out cash payments that have denominations
+      // Helper function to check if denominations have meaningful values
+      const hasMeaningfulDenominations = (denominations: any): boolean => {
+        if (!denominations || typeof denominations !== 'object') {
+          return false;
+        }
+        
+        // Check if any denomination has a value greater than 0
+        return Object.values(denominations).some((value: any) => {
+          const numValue = parseFloat(value?.toString() || '0');
+          return numValue > 0;
+        });
+      };
+      
+      // Helper function to check if this is a genuine denomination-based payment
+      const isGenuineDenominationPayment = (payer: any): boolean => {
+        // First check: Does it have non-zero values in the denomination objects themselves?
+        const hasReceivedDenoms = hasMeaningfulDenominations(payer.denominations_received);
+        const hasReturnedDenoms = hasMeaningfulDenominations(payer.denominations_returned);
+        
+        // If there are actual denomination values, it's definitely a denomination payment
+        if (hasReceivedDenoms || hasReturnedDenoms) {
+          return true;
+        }
+        
+        // Second check: Look for signs of denomination tracking usage
+        // If we have total_received but no actual denomination breakdown, 
+        // and total_received equals payer_amount, it might be a regular payment
+        const totalReceived = parseFloat(payer.total_received?.toString() || '0');
+        const totalReturned = parseFloat(payer.total_returned?.toString() || '0');
+        const payerAmount = parseFloat(payer.payer_amount?.toString() || '0');
+        
+        // If total_received > 0 AND it doesn't equal payer_amount, it's likely denomination-based
+        if (totalReceived > 0 && totalReceived !== payerAmount) {
+          return true;
+        }
+        
+        // If total_returned > 0, it's definitely denomination-based (change given)
+        if (totalReturned > 0) {
+          return true;
+        }
+        
+        // EDGE CASE FIX: If total_received equals payer_amount and total_returned is 0,
+        // and no actual denomination values, treat as regular payment
+        // This handles cases where denomination structure exists but wasn't actually used
+        if (totalReceived === payerAmount && totalReturned === 0 && !hasReceivedDenoms && !hasReturnedDenoms) {
+          return false; // Not a genuine denomination payment
+        }
+        
+        // If we have any denomination-related totals, assume it's denomination-based
+        return totalReceived > 0 || totalReturned > 0;
+      };
+      
+      // Filter out cash payments that are genuine denomination-based payments
       const filteredPayers = allPayers.filter(payer => {
         // First check if this is a Cash object (not gift or other item)
         if (payer.payer_given_object === 'Cash') {
           // If it's a Cash payment, check if it has denominations based on payer_cash_method
           if (payer.payer_cash_method === 'Cash') {
-            const hasDenominations = 
-              (payer.denominations_received && Object.keys(payer.denominations_received).length > 0) ||
-              (payer.denominations_returned && Object.keys(payer.denominations_returned).length > 0);
+            const isGenuineDenomPayment = isGenuineDenominationPayment(payer);
             
-            // Include only Cash payments WITHOUT denominations
-            return !hasDenominations;
+            console.log(`Payer ${payer.payer_name}: amount=${payer.payer_amount}, total_received=${payer.total_received}, total_returned=${payer.total_returned}, isGenuineDenomPayment=${isGenuineDenomPayment}`);
+            
+            // CRITICAL FIX: Include only Cash payments that are NOT genuine denomination payments
+            if (isGenuineDenomPayment) {
+              console.log(`Excluding ${payer.payer_name} - genuine denomination payment`);
+              return false; // EXCLUDE - this payment uses denomination tracking
+            } else {
+              console.log(`Including ${payer.payer_name} - regular cash payment (denomination structure exists but not used meaningfully)`);
+              return true;  // INCLUDE - this is a regular payment method entry
+            }
           }
           // Include all other cash methods (Google Pay, PhonePe, etc.)
+          console.log(`Including ${payer.payer_name} - non-Cash method: ${payer.payer_cash_method}`);
           return true;
         }
         // Exclude non-Cash objects (gifts, etc.)
+        console.log(`Excluding ${payer.payer_name} - not a Cash object: ${payer.payer_given_object}`);
         return false;
       });
       
-      console.log(`Filtered to ${filteredPayers.length} cash payers (excluding those with denominations)`);
+      console.log(`Filtered to ${filteredPayers.length} cash payers (excluding those with meaningful denominations)`);
       
       // Initialize payment methods object
       const paymentMethods: Record<string, number> = {
@@ -1316,7 +1376,7 @@ export const getFunctionPaymentMethods = asyncHandler(
       let totalCount = 0;
       
       filteredPayers.forEach(payer => {
-        const amount = payer.payer_amount || 0;
+        const amount = parseFloat(payer.payer_amount?.toString() || '0');
         let method = payer.payer_cash_method;
         
         // Handle null or empty payment methods - move to 'Other'
@@ -1339,6 +1399,8 @@ export const getFunctionPaymentMethods = asyncHandler(
         
         totalAmount += amount;
         totalCount++;
+        
+        console.log(`Added payer ${payer.payer_name}: method=${method}, amount=${amount}`);
       });
       
       // Clean the response - only include payment methods with amount > 0
@@ -1383,6 +1445,8 @@ export const getFunctionPaymentMethods = asyncHandler(
         count: methodCounts[method] || 0,
         total_amount: amount
       }));
+      
+      console.log(`Final summary: ${detailedSummary.length} payment methods, total amount: ${totalAmount}`);
       
       res.status(200).json({
         success: true,
