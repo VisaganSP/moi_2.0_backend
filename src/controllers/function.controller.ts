@@ -294,6 +294,57 @@ export const updateFunction = asyncHandler(
         delete updateData.function_id;
       }
 
+      // Handle function_bill_details updates with new fields
+      if (updateData.function_bill_details) {
+        const billDetails = updateData.function_bill_details;
+        
+        // Validate and process logo image if present
+        if (billDetails.logo_image) {
+          // Validate base64 image format
+          const base64Regex = /^data:image\/(jpeg|jpg|png|gif);base64,/;
+          if (!base64Regex.test(billDetails.logo_image)) {
+            next(new ErrorResponse('Invalid image format. Only JPEG, PNG, and GIF are supported', 400));
+            return;
+          }
+          
+          // Check image size (2MB limit for base64)
+          const imageSize = (billDetails.logo_image.length * 3) / 4 - 2; // Approximate base64 to bytes
+          if (imageSize > 2 * 1024 * 1024) {
+            next(new ErrorResponse('Image size exceeds 2MB limit', 400));
+            return;
+          }
+        }
+        
+        // Process advertisement settings with defaults
+        if (billDetails.advertisement_settings) {
+          const adSettings = {
+            ad_title: billDetails.advertisement_settings.ad_title || 'MOITECH',
+            ad_subtitle: billDetails.advertisement_settings.ad_subtitle || 'For all your tech needs',
+            ad_phone: billDetails.advertisement_settings.ad_phone || '7339124748, 9894454345'
+          };
+          billDetails.advertisement_settings = adSettings;
+        }
+        
+        // Process font settings with defaults
+        if (billDetails.font_settings) {
+          const fontSettings = {
+            base_font_size: Math.max(8, Math.min(20, billDetails.font_settings.base_font_size || 12)), // Clamp between 8-20px
+            company_name_size: Math.max(10, Math.min(24, billDetails.font_settings.company_name_size || 14)),
+            header_size: Math.max(8, Math.min(18, billDetails.font_settings.header_size || 12)),
+            customer_name_size: Math.max(10, Math.min(22, billDetails.font_settings.customer_name_size || 16)),
+            amount_size: Math.max(12, Math.min(24, billDetails.font_settings.amount_size || 18))
+          };
+          billDetails.font_settings = fontSettings;
+        }
+        
+        // Merge existing function_bill_details with new data
+        const existingBillDetails = functionObj.function_bill_details || {};
+        updateData.function_bill_details = {
+          ...existingBillDetails,
+          ...billDetails
+        };
+      }
+
       // Update function using its MongoDB _id
       functionObj = await FunctionModel.findByIdAndUpdate(functionObj._id, updateData, {
         new: true,

@@ -97,10 +97,18 @@ const PayerSchema: Schema = new Schema(
       type: Number,
       default: 0
     },
+    // CHANGED: created_by now stores user email instead of ObjectId
     created_by: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
+      type: String,
+      required: [true, 'Creator email is required'],
+      trim: true,
+      lowercase: true,
+      match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
+    },
+    // NEW: Optional field to store creator's name for display purposes
+    created_by_name: {
+      type: String,
+      trim: true
     },
     is_deleted: {
       type: Boolean,

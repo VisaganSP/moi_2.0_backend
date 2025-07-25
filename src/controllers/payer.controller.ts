@@ -49,8 +49,9 @@ export const createPayer = asyncHandler(
       return;
     }
 
-    // Add user id and organization info to request body
-    req.body.created_by = req.user._id;
+    // CHANGED: Add user email and name instead of ObjectId
+    req.body.created_by = req.user.email;
+    req.body.created_by_name = req.user.username;
     req.body.org_id = orgId;
     req.body.org_name = orgName;
 

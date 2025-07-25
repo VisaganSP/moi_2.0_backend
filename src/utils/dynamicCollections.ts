@@ -43,7 +43,76 @@ const collectionSchemas = {
       wife_name: String,
       wife_occupation: String,
       function_place: String,
-      function_city: String
+      function_city: String,
+      
+      // NEW: Logo image stored as base64 string
+      logo_image: { 
+        type: String,
+        validate: {
+          validator: function(v: string) {
+            if (!v) return true; // Allow empty values
+            // Validate base64 image format
+            return /^data:image\/(jpeg|jpg|png|gif);base64,/.test(v);
+          },
+          message: 'Logo image must be a valid base64 encoded image (JPEG, PNG, or GIF)'
+        }
+      },
+      
+      // NEW: Advertisement settings
+      advertisement_settings: {
+        ad_title: { 
+          type: String, 
+          default: 'MOITECH',
+          trim: true,
+          maxlength: 100
+        },
+        ad_subtitle: { 
+          type: String, 
+          default: 'For all your tech needs',
+          trim: true,
+          maxlength: 200
+        },
+        ad_phone: { 
+          type: String, 
+          default: '7339124748, 9894454345',
+          trim: true,
+          maxlength: 100
+        }
+      },
+      
+      // NEW: Font settings with validation
+      font_settings: {
+        base_font_size: { 
+          type: Number, 
+          default: 12,
+          min: 8,
+          max: 20
+        },
+        company_name_size: { 
+          type: Number, 
+          default: 14,
+          min: 10,
+          max: 24
+        },
+        header_size: { 
+          type: Number, 
+          default: 12,
+          min: 8,
+          max: 18
+        },
+        customer_name_size: { 
+          type: Number, 
+          default: 16,
+          min: 10,
+          max: 22
+        },
+        amount_size: { 
+          type: Number, 
+          default: 18,
+          min: 12,
+          max: 24
+        }
+      }
     },
     created_by: {
       type: mongoose.Schema.Types.ObjectId,
@@ -142,10 +211,18 @@ const collectionSchemas = {
       type: Number,
       default: 0
     },
+    // CHANGED: created_by now stores user email instead of ObjectId
     created_by: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
+      match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
+    },
+    // NEW: Optional field to store creator's name for display purposes
+    created_by_name: {
+      type: String,
+      trim: true
     },
     org_id: {
       type: mongoose.Schema.Types.ObjectId,
