@@ -5,6 +5,7 @@ import User from '../models/User.model';
 import Organization from '../models/Organization.model';
 import { ErrorResponse } from '../utils/errorResponse';
 import { UserDocument, AuthenticatedRequest, ActiveSession } from '../types';
+import bcrypt from 'bcryptjs';
 
 // Generate JWT Token with organization context
 const generateToken = (userId: string, orgId: string, orgName: string): string => {
@@ -323,6 +324,229 @@ export const checkOrganizationLoginStatus = asyncHandler(
         next(new ErrorResponse(`Failed to check organization status: ${error.message}`, 500));
       } else {
         next(new ErrorResponse('Failed to check organization status due to an unknown error', 500));
+      }
+    }
+  }
+);
+
+// Add these functions to your existing auth.controller.ts file
+
+// @desc    Initiate forgot password - verify email and org, return security questions
+// @route   POST /api/auth/forgot-password
+// @access  Public
+export const forgotPassword = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { email, org_name } = req.body;
+
+      // Validate input
+      if (!email || !org_name) {
+        next(new ErrorResponse('Email and organization name are required', 400));
+        return;
+      }
+
+      // Find user in the specified organization
+      const user = await User.findOne({ 
+        email,
+        org_name
+      }).select('security_questions');
+
+      if (!user) {
+        // Don't reveal if user exists or not for security
+        next(new ErrorResponse('If the email exists in this organization, security questions will be provided', 404));
+        return;
+      }
+
+      // Check if user has security questions set up
+      if (!user.security_questions || user.security_questions.length === 0) {
+        next(new ErrorResponse('Security questions not set up for this account', 400));
+        return;
+      }
+
+      // Return only the questions (not the answers)
+      const questions = user.security_questions.map((sq: any) => ({
+        question: sq.question,
+        questionId: sq._id
+      }));
+
+      res.status(200).json({
+        success: true,
+        data: {
+          userId: user._id,
+          questions
+        }
+      });
+    } catch (error) {
+      console.error('Error in forgot password:', error);
+      if (error instanceof Error) {
+        next(new ErrorResponse(`Failed to process forgot password: ${error.message}`, 500));
+      } else {
+        next(new ErrorResponse('Failed to process forgot password due to an unknown error', 500));
+      }
+    }
+  }
+);
+
+// @desc    Verify security answers and reset password
+// @route   POST /api/auth/reset-password
+// @access  Public
+export const resetPassword = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { userId, answers, newPassword } = req.body;
+
+      // Validate input
+      if (!userId || !answers || !newPassword) {
+        next(new ErrorResponse('User ID, answers, and new password are required', 400));
+        return;
+      }
+
+      // Validate new password length
+      if (newPassword.length < 6) {
+        next(new ErrorResponse('Password must be at least 6 characters', 400));
+        return;
+      }
+
+      // Find user
+      const user = await User.findById(userId).select('+security_questions.answer');
+
+      if (!user) {
+        next(new ErrorResponse('Invalid request', 400));
+        return;
+      }
+
+      // Verify all security answers
+      let allAnswersCorrect = true;
+      
+      for (const providedAnswer of answers) {
+        const securityQuestion = user.security_questions.find(
+          (sq: any) => sq._id.toString() === providedAnswer.questionId
+        );
+
+        if (!securityQuestion) {
+          allAnswersCorrect = false;
+          break;
+        }
+
+        // Compare answers (case-insensitive)
+        const isMatch = await bcrypt.compare(
+          providedAnswer.answer.toLowerCase().trim(),
+          securityQuestion.answer
+        );
+
+        if (!isMatch) {
+          allAnswersCorrect = false;
+          break;
+        }
+      }
+
+      if (!allAnswersCorrect) {
+        next(new ErrorResponse('Security answers do not match', 401));
+        return;
+      }
+
+      // Update password
+      user.password = newPassword;
+      await user.save();
+
+      // Clear any active sessions for security
+      user.active_session = undefined;
+      await user.save({ validateBeforeSave: false });
+
+      res.status(200).json({
+        success: true,
+        message: 'Password reset successful. Please login with your new password.'
+      });
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      if (error instanceof Error) {
+        next(new ErrorResponse(`Failed to reset password: ${error.message}`, 500));
+      } else {
+        next(new ErrorResponse('Failed to reset password due to an unknown error', 500));
+      }
+    }
+  }
+);
+
+// @desc    Set security questions for a user
+// @route   POST /api/auth/security-questions
+// @access  Private
+export const setSecurityQuestions = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!req.user) {
+        next(new ErrorResponse('Not authorized', 401));
+        return;
+      }
+
+      const { questions } = req.body;
+
+      // Validate input
+      if (!questions || !Array.isArray(questions) || questions.length < 2) {
+        next(new ErrorResponse('At least 2 security questions are required', 400));
+        return;
+      }
+
+      // Hash the answers before storing
+      const hashedQuestions = await Promise.all(
+        questions.map(async (q: any) => {
+          const salt = await bcrypt.genSalt(10);
+          const hashedAnswer = await bcrypt.hash(q.answer.toLowerCase().trim(), salt);
+          return {
+            question: q.question,
+            answer: hashedAnswer
+          };
+        })
+      );
+
+      // Update user with security questions
+      req.user.security_questions = hashedQuestions;
+      await req.user.save();
+
+      res.status(200).json({
+        success: true,
+        message: 'Security questions set successfully'
+      });
+    } catch (error) {
+      console.error('Error setting security questions:', error);
+      if (error instanceof Error) {
+        next(new ErrorResponse(`Failed to set security questions: ${error.message}`, 500));
+      } else {
+        next(new ErrorResponse('Failed to set security questions due to an unknown error', 500));
+      }
+    }
+  }
+);
+
+// @desc    Get user's security questions (questions only, not answers)
+// @route   GET /api/auth/security-questions
+// @access  Private
+export const getSecurityQuestions = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!req.user) {
+        next(new ErrorResponse('Not authorized', 401));
+        return;
+      }
+
+      const questions = req.user.security_questions?.map((sq: any) => ({
+        question: sq.question,
+        questionId: sq._id
+      })) || [];
+
+      res.status(200).json({
+        success: true,
+        data: {
+          questions,
+          hasSecurityQuestions: questions.length > 0
+        }
+      });
+    } catch (error) {
+      console.error('Error getting security questions:', error);
+      if (error instanceof Error) {
+        next(new ErrorResponse(`Failed to get security questions: ${error.message}`, 500));
+      } else {
+        next(new ErrorResponse('Failed to get security questions due to an unknown error', 500));
       }
     }
   }

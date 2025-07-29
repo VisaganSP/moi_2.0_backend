@@ -1057,6 +1057,262 @@ OR
 }
 ```
 
+### Forgot Password
+
+Initiates the forgot password flow by verifying email and organization, then returning security questions.
+
+- **URL**: `/auth/forgot-password`
+- **Method**: `POST`
+- **Auth Required**: No
+- **Content Type**: `application/json`
+
+**Request Body**:
+
+```json
+{
+  "email": "testuser@example.com",
+  "org_name": "adminorg"
+}
+```
+
+**Example Request**:
+
+```bash
+curl -X POST http://localhost:5001/api/auth/forgot-password \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "testuser@example.com",
+    "org_name": "adminorg"
+  }'
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "userId": "68223597f95499dd5046930f",
+    "questions": [
+      {
+        "question": "What is your mother's maiden name?",
+        "questionId": "507f1f77bcf86cd799439011"
+      },
+      {
+        "question": "What was the name of your first pet?",
+        "questionId": "507f1f77bcf86cd799439012"
+      }
+    ]
+  }
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Email and organization name are required"
+}
+```
+
+OR
+
+```json
+{
+  "success": false,
+  "error": "Security questions not set up for this account"
+}
+```
+
+### Reset Password
+
+Verifies security answers and resets the user's password.
+
+- **URL**: `/auth/reset-password`
+- **Method**: `POST`
+- **Auth Required**: No
+- **Content Type**: `application/json`
+
+**Request Body**:
+
+```json
+{
+  "userId": "68223597f95499dd5046930f",
+  "answers": [
+    {
+      "questionId": "507f1f77bcf86cd799439011",
+      "answer": "Smith"
+    },
+    {
+      "questionId": "507f1f77bcf86cd799439012",
+      "answer": "Fluffy"
+    }
+  ],
+  "newPassword": "newPassword123"
+}
+```
+
+**Example Request**:
+
+```bash
+curl -X POST http://localhost:5001/api/auth/reset-password \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "68223597f95499dd5046930f",
+    "answers": [
+      {
+        "questionId": "507f1f77bcf86cd799439011",
+        "answer": "Smith"
+      },
+      {
+        "questionId": "507f1f77bcf86cd799439012",
+        "answer": "Fluffy"
+      }
+    ],
+    "newPassword": "newPassword123"
+  }'
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "message": "Password reset successful. Please login with your new password."
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Security answers do not match"
+}
+```
+
+OR
+
+```json
+{
+  "success": false,
+  "error": "Password must be at least 6 characters"
+}
+```
+
+### Set Security Questions
+
+Allows authenticated users to set their security questions for password recovery.
+
+- **URL**: `/auth/security-questions`
+- **Method**: `POST`
+- **Auth Required**: Yes (JWT Token)
+- **Content Type**: `application/json`
+
+**Request Body**:
+
+```json
+{
+  "questions": [
+    {
+      "question": "What is your mother's maiden name?",
+      "answer": "Smith"
+    },
+    {
+      "question": "What was the name of your first pet?",
+      "answer": "Fluffy"
+    }
+  ]
+}
+```
+
+**Example Request**:
+
+```bash
+curl -X POST http://localhost:5001/api/auth/security-questions \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "questions": [
+      {
+        "question": "What is your mother'\''s maiden name?",
+        "answer": "Smith"
+      },
+      {
+        "question": "What was the name of your first pet?",
+        "answer": "Fluffy"
+      }
+    ]
+  }'
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "message": "Security questions set successfully"
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "At least 2 security questions are required"
+}
+```
+
+### Get Security Questions
+
+Retrieves the current user's security questions (without answers).
+
+- **URL**: `/auth/security-questions`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token)
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/auth/security-questions \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "questions": [
+      {
+        "question": "What is your mother's maiden name?",
+        "questionId": "507f1f77bcf86cd799439011"
+      },
+      {
+        "question": "What was the name of your first pet?",
+        "questionId": "507f1f77bcf86cd799439012"
+      }
+    ],
+    "hasSecurityQuestions": true
+  }
+}
+```
+
+**Response when no security questions are set**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "questions": [],
+    "hasSecurityQuestions": false
+  }
+}
+```
+
 ## Function Endpoints
 
 ### Create Function

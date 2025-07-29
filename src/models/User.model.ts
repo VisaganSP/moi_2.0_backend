@@ -69,7 +69,18 @@ const UserSchema: Schema = new Schema(
     active_session: {
       type: ActiveSessionSchema,
       default: null
-    }
+    },
+    security_questions: [{
+      question: {
+        type: String,
+        required: true
+      },
+      answer: {
+        type: String,
+        required: true,
+        select: false // Hide answers by default
+      }
+    }]
   },
   { timestamps: true }
 );

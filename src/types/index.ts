@@ -9,6 +9,12 @@ export interface ActiveSession {
   last_active: Date;
 }
 
+export interface SecurityQuestion {
+  _id?: string;
+  question: string;
+  answer: string;
+}
+
 export interface UserDocument extends Document {
   username: string;
   email: string;
@@ -18,6 +24,7 @@ export interface UserDocument extends Document {
   org_id: Types.ObjectId; // Added for multi-tenancy
   org_name: string; // Added for multi-tenancy
   active_session?: ActiveSession; // Added for session tracking
+  security_questions: SecurityQuestion[];
   createdAt: Date;
   updatedAt: Date;
   matchPassword(enteredPassword: string): Promise<boolean>;
