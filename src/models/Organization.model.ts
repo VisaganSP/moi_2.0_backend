@@ -32,11 +32,16 @@ const OrganizationSchema = new mongoose.Schema({
       default: 60 // 1 hour
     }
   },
-  // New subscription field for function limits
+  // Updated subscription field with flexible max_functions
   subscription: {
+    subscription_plan: {
+      type: String,
+      enum: ['basic', 'standard', 'premium'],
+      default: 'basic'
+    },
     max_functions: {
       type: Number,
-      default: 10, // Default limit is 10 functions
+      default: 10, // Default but fully customizable
       min: 0
     },
     functions_created: {
@@ -62,5 +67,13 @@ const OrganizationSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
+// Add index for efficient queries
+OrganizationSchema.index({ org_name: 1 });
+OrganizationSchema.index({ org_id: 1 });
+OrganizationSchema.index({ 'subscription.subscription_plan': 1 });
+
+// Note: Removed the restrictive pre-save middleware that enforced plan limits
+// max_functions is now fully flexible and can be set to any value by superadmins
 
 export default mongoose.model('Organization', OrganizationSchema);

@@ -12,6 +12,30 @@ import { createOrganizationCollections, createOrganizationIndexes } from '../uti
 import mongoose from 'mongoose';
 import { logger } from '../utils/logger';
 
+// Define types for better type safety
+type SubscriptionPlan = 'basic' | 'standard' | 'premium';
+
+// Define the Subscription interface for proper typing
+interface Subscription {
+  max_functions: number;
+  functions_created: number;
+  subscription_plan: SubscriptionPlan;
+  last_updated: Date;
+  updated_by?: mongoose.Types.ObjectId;
+}
+
+// Define subscription plan base prices (max_functions is now flexible)
+const SUBSCRIPTION_PLANS: Record<SubscriptionPlan, { name: string; base_price: number; base_functions: number }> = {
+  basic: { name: 'Basic Tier', base_price: 2500, base_functions: 10 },
+  standard: { name: 'Standard Tier', base_price: 4500, base_functions: 25 },
+  premium: { name: 'Premium Tier', base_price: 7500, base_functions: 40 }
+};
+
+// Helper function to validate subscription plan
+const isValidSubscriptionPlan = (plan: any): plan is SubscriptionPlan => {
+  return typeof plan === 'string' && ['basic', 'standard', 'premium'].includes(plan);
+};
+
 // @desc    Create a new organization
 // @route   POST /api/organizations
 // @access  Private/SuperAdmin
@@ -114,7 +138,6 @@ export const getOrganizations = asyncHandler(
         .skip(startIndex)
         .limit(limitNum)
         .lean(); // Use lean for performance
-        // Removed .populate('created_by') since it's not in the schema
 
       console.log(`Found ${organizations.length} organizations after pagination`);
 
@@ -170,16 +193,16 @@ export const getPublicOrganizations = asyncHandler(
 );
 
 // @desc    Get single organization
-// @route   GET /api/organizations/:id
+// @route   GET /api/organizations/:orgName
 // @access  Private/SuperAdmin
 export const getOrganization = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // Removed the .populate('created_by') call since it's not in the schema
-      const organization = await Organization.findById(req.params.id).lean();
+      const { orgName } = req.params;
+      const organization = await Organization.findOne({ org_name: orgName }).lean();
 
       if (!organization) {
-        next(new ErrorResponse(`Organization not found with id of ${req.params.id}`, 404));
+        next(new ErrorResponse(`Organization not found with org_name of ${orgName}`, 404));
         return;
       }
 
@@ -199,15 +222,16 @@ export const getOrganization = asyncHandler(
 );
 
 // @desc    Update organization
-// @route   PUT /api/organizations/:id
+// @route   PUT /api/organizations/:orgName
 // @access  Private/SuperAdmin
 export const updateOrganization = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-      let organization = await Organization.findById(req.params.id);
+      const { orgName } = req.params;
+      let organization = await Organization.findOne({ org_name: orgName });
 
       if (!organization) {
-        next(new ErrorResponse(`Organization not found with id of ${req.params.id}`, 404));
+        next(new ErrorResponse(`Organization not found with org_name of ${orgName}`, 404));
         return;
       }
 
@@ -221,8 +245,8 @@ export const updateOrganization = asyncHandler(
       const originalOrg = { ...organization.toObject() };
 
       // Update organization
-      organization = await Organization.findByIdAndUpdate(
-        req.params.id, 
+      organization = await Organization.findOneAndUpdate(
+        { org_name: orgName }, 
         { 
           ...req.body,
           updated_at: Date.now() 
@@ -235,7 +259,7 @@ export const updateOrganization = asyncHandler(
 
       // Invalidate any relevant cache
       await invalidateCacheByPattern(`api:/organizations*`);
-      await invalidateCacheByPattern(`api:/organizations/${req.params.id}*`);
+      await invalidateCacheByPattern(`api:/organizations/${orgName}*`);
 
       res.status(200).json({
         success: true,
@@ -253,31 +277,32 @@ export const updateOrganization = asyncHandler(
 );
 
 // @desc    Delete organization
-// @route   DELETE /api/organizations/:id
+// @route   DELETE /api/organizations/:orgName
 // @access  Private/SuperAdmin
 export const deleteOrganization = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const organization = await Organization.findById(req.params.id);
+      const { orgName } = req.params;
+      const organization = await Organization.findOne({ org_name: orgName });
 
       if (!organization) {
-        next(new ErrorResponse(`Organization not found with id of ${req.params.id}`, 404));
+        next(new ErrorResponse(`Organization not found with org_name of ${orgName}`, 404));
         return;
       }
 
-      // Check if organization has users
-      const userCount = await User.countDocuments({ org_id: organization._id });
+      // Check if organization has users (assuming users have org_name field)
+      const userCount = await User.countDocuments({ org_name: orgName });
       if (userCount > 0) {
         next(new ErrorResponse(`Cannot delete organization with active users. Delete all users first.`, 400));
         return;
       }
 
       // Perform the delete operation
-      await Organization.findByIdAndDelete(req.params.id);
+      await Organization.findOneAndDelete({ org_name: orgName });
 
       // Invalidate cache
       await invalidateCacheByPattern(`api:/organizations*`);
-      await invalidateCacheByPattern(`api:/organizations/${req.params.id}*`);
+      await invalidateCacheByPattern(`api:/organizations/${orgName}*`);
 
       res.status(200).json({
         success: true,
@@ -333,13 +358,12 @@ export const getOrganizationStats = asyncHandler(
     try {
       const totalOrgs = await Organization.countDocuments();
       
-      // Get counts of users per organization
+      // Get counts of users per organization (using org_name)
       const usersByOrg = await User.aggregate([
         {
           $group: {
-            _id: '$org_id',
-            count: { $sum: 1 },
-            org_name: { $first: '$org_name' }
+            _id: '$org_name',
+            count: { $sum: 1 }
           }
         },
         {
@@ -350,9 +374,10 @@ export const getOrganizationStats = asyncHandler(
       // Add organization details to each entry
       const detailedStats = await Promise.all(
         usersByOrg.map(async (item) => {
-          const org = await Organization.findById(item._id).select('display_name org_name').lean();
+          const org = await Organization.findOne({ org_name: item._id }).select('display_name org_name').lean();
           return {
-            ...item,
+            org_name: item._id,
+            count: item.count,
             display_name: org?.display_name || 'Unknown Organization'
           };
         })
@@ -475,17 +500,9 @@ export const getSuperadmins = asyncHandler(
   }
 );
 
-// Define the Subscription interface for proper typing
-interface Subscription {
-  max_functions: number;
-  functions_created: number;
-  last_updated: Date;
-  updated_by?: mongoose.Types.ObjectId;
-}
-
 // @desc    Get organization subscription status
-// @route   GET /api/organizations/:id/subscription
-// @access  Private (Admin for any org, or regular user for their own org)
+// @route   GET /api/organizations/:orgName/subscription
+// @access  Private (All authenticated users can access their own org subscription)
 export const getOrganizationSubscription = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -494,33 +511,47 @@ export const getOrganizationSubscription = asyncHandler(
         return;
       }
 
-      const { id } = req.params;
+      const { orgName } = req.params;
       const isAdmin = req.user.isAdmin;
       const isSuperAdmin = req.user.isSuperAdmin;
       
-      // Get user's organization first to compare org_id values properly
-      const userOrganization = await Organization.findById(req.user.org_id);
-      // Now we can compare string with string - both org_id fields
-      const isOwnOrg = userOrganization ? userOrganization.org_id === id : false;
+      // Find organization by org_name (unique identifier)
+      const organization = await Organization.findOne({ org_name: orgName });
 
-      if (!isAdmin && !isSuperAdmin && !isOwnOrg) {
-        next(new ErrorResponse('Not authorized to access this resource', 403));
+      if (!organization) {
+        next(new ErrorResponse(`Organization not found with org_name of ${orgName}`, 404));
         return;
       }
 
-      const organization = await Organization.findOne({ org_id: id });
+      // For subscription access, we'll be permissive:
+      // 1. SuperAdmins can access any organization
+      // 2. Admins can access any organization
+      // 3. Any authenticated user can access their own organization's subscription
+      
+      let hasAccess = false;
+      
+      if (isSuperAdmin || isAdmin) {
+        // SuperAdmins and Admins can access any organization
+        hasAccess = true;
+      } else {
+        // Check if user belongs to this organization
+        if (req.user.org_name && req.user.org_name === orgName) {
+          hasAccess = true;
+        }
+      }
 
-      if (!organization) {
-        next(new ErrorResponse(`Organization not found with id of ${id}`, 404));
+      if (!hasAccess) {
+        next(new ErrorResponse('Not authorized to access this organization subscription', 403));
         return;
       }
 
       // Initialize subscription if it doesn't exist
       if (!organization.subscription) {
-        // Create a properly typed subscription object
+        // Create a properly typed subscription object with default basic plan
         const initialSubscription: Subscription = {
-          max_functions: 10,
+          max_functions: SUBSCRIPTION_PLANS.basic.base_functions,
           functions_created: 0,
+          subscription_plan: 'basic',
           last_updated: new Date()
         };
         
@@ -532,6 +563,9 @@ export const getOrganizationSubscription = asyncHandler(
       // Type assertion to ensure subscription is treated as defined
       const subscription = (organization.subscription as Subscription);
 
+      // Get plan details
+      const planDetails = SUBSCRIPTION_PLANS[subscription.subscription_plan] || SUBSCRIPTION_PLANS.basic;
+
       res.status(200).json({
         success: true,
         data: {
@@ -539,11 +573,19 @@ export const getOrganizationSubscription = asyncHandler(
           org_name: organization.org_name,
           display_name: organization.display_name,
           subscription: {
+            subscription_plan: subscription.subscription_plan,
             max_functions: subscription.max_functions,
             functions_created: subscription.functions_created,
             functions_remaining: Math.max(0, subscription.max_functions - subscription.functions_created),
             last_updated: subscription.last_updated,
           },
+          plan_details: {
+            plan_name: subscription.subscription_plan,
+            plan_display_name: planDetails.name,
+            base_price: planDetails.base_price,
+            base_functions: planDetails.base_functions,
+            currency: 'INR'
+          }
         },
       });
     } catch (error) {
@@ -561,7 +603,7 @@ export const getOrganizationSubscription = asyncHandler(
 );
 
 // @desc    Update organization subscription limits
-// @route   PUT /api/organizations/:id/subscription
+// @route   PUT /api/organizations/:orgName/subscription
 // @access  Private (SuperAdmin only)
 export const updateOrganizationSubscription = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
@@ -576,18 +618,25 @@ export const updateOrganizationSubscription = asyncHandler(
         return;
       }
 
-      const { id } = req.params;
-      const { max_functions } = req.body;
+      const { orgName } = req.params;
+      const { max_functions, subscription_plan } = req.body;
 
-      if (max_functions === undefined || max_functions < 0) {
-        next(new ErrorResponse('Valid max_functions value is required', 400));
+      // Validate subscription plan if provided
+      if (subscription_plan && !isValidSubscriptionPlan(subscription_plan)) {
+        next(new ErrorResponse('Invalid subscription plan. Must be basic, standard, or premium', 400));
         return;
       }
 
-      const organization = await Organization.findOne({ org_id: id });
+      // Validate max_functions if provided
+      if (max_functions !== undefined && max_functions < 0) {
+        next(new ErrorResponse('max_functions must be a positive number', 400));
+        return;
+      }
+
+      const organization = await Organization.findOne({ org_name: orgName });
 
       if (!organization) {
-        next(new ErrorResponse(`Organization not found with id of ${id}`, 404));
+        next(new ErrorResponse(`Organization not found with org_name of ${orgName}`, 404));
         return;
       }
 
@@ -603,11 +652,36 @@ export const updateOrganizationSubscription = asyncHandler(
         updatedById = new mongoose.Types.ObjectId();
       }
 
+      // Determine the final values - full flexibility for max_functions
+      let finalPlan: SubscriptionPlan = 'basic';
+      let finalMaxFunctions = 10;
+
+      if (subscription_plan && isValidSubscriptionPlan(subscription_plan)) {
+        finalPlan = subscription_plan;
+        // If max_functions is also provided, use that value, otherwise use current value or base value
+        if (max_functions !== undefined) {
+          finalMaxFunctions = max_functions;
+        } else {
+          finalMaxFunctions = (organization.subscription as any)?.max_functions || SUBSCRIPTION_PLANS[subscription_plan].base_functions;
+        }
+      } else if (max_functions !== undefined) {
+        finalMaxFunctions = max_functions;
+        // Keep existing plan if available, otherwise set to basic
+        const existingPlan = (organization.subscription as any)?.subscription_plan;
+        finalPlan = isValidSubscriptionPlan(existingPlan) ? existingPlan : 'basic';
+      } else {
+        // Keep existing values if available
+        const existingPlan = (organization.subscription as any)?.subscription_plan;
+        finalPlan = isValidSubscriptionPlan(existingPlan) ? existingPlan : 'basic';
+        finalMaxFunctions = (organization.subscription as any)?.max_functions || 10;
+      }
+
       // Initialize or update subscription with proper types
       if (!organization.subscription) {
         const newSubscription: Subscription = {
-          max_functions,
+          max_functions: finalMaxFunctions,
           functions_created: 0,
+          subscription_plan: finalPlan,
           last_updated: new Date(),
           updated_by: updatedById
         };
@@ -617,7 +691,8 @@ export const updateOrganizationSubscription = asyncHandler(
       } else {
         // Use type assertion to access subscription properties
         const subscription = (organization.subscription as Subscription);
-        subscription.max_functions = max_functions;
+        subscription.max_functions = finalMaxFunctions;
+        subscription.subscription_plan = finalPlan;
         subscription.last_updated = new Date();
         subscription.updated_by = updatedById;
       }
@@ -625,10 +700,11 @@ export const updateOrganizationSubscription = asyncHandler(
       await organization.save();
 
       await invalidateCacheByPattern(`api:/organizations*`);
-      await invalidateCacheByPattern(`api:/organizations/${id}*`);
+      await invalidateCacheByPattern(`api:/organizations/${orgName}*`);
 
       // Safe type assertion for response
       const subscription = (organization.subscription as Subscription);
+      const planDetails = SUBSCRIPTION_PLANS[subscription.subscription_plan];
 
       res.status(200).json({
         success: true,
@@ -636,11 +712,19 @@ export const updateOrganizationSubscription = asyncHandler(
           org_id: organization.org_id,
           org_name: organization.org_name,
           subscription: {
+            subscription_plan: subscription.subscription_plan,
             max_functions: subscription.max_functions,
             functions_created: subscription.functions_created,
             functions_remaining: Math.max(0, subscription.max_functions - subscription.functions_created),
             last_updated: subscription.last_updated,
           },
+          plan_details: {
+            plan_name: subscription.subscription_plan,
+            plan_display_name: planDetails.name,
+            base_price: planDetails.base_price,
+            base_functions: planDetails.base_functions,
+            currency: 'INR'
+          }
         },
       });
     } catch (error) {
@@ -653,6 +737,78 @@ export const updateOrganizationSubscription = asyncHandler(
           500
         )
       );
+    }
+  }
+);
+
+// @desc    Get subscription plans information
+// @route   GET /api/organizations/subscription-plans
+// @access  Public
+export const getSubscriptionPlans = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const plans = [
+        {
+          plan: 'basic',
+          name: 'Basic Tier',
+          base_price: 2500,
+          currency: 'INR',
+          billing_period: 'monthly',
+          base_functions: 10,
+          features: [
+            'Unlimited user accounts',
+            'Base 10 Functions/Events per month (customizable)',
+            'Basic reporting features',
+            'Standard email support'
+          ]
+        },
+        {
+          plan: 'standard',
+          name: 'Standard Tier',
+          base_price: 4500,
+          currency: 'INR',
+          billing_period: 'monthly',
+          base_functions: 25,
+          features: [
+            'Unlimited user accounts',
+            'Base 25 Functions/Events per month (customizable)',
+            'Function Analytics Reports included',
+            'Advanced reporting capabilities',
+            'Priority email support'
+          ]
+        },
+        {
+          plan: 'premium',
+          name: 'Premium Tier',
+          base_price: 7500,
+          currency: 'INR',
+          billing_period: 'monthly',
+          base_functions: 40,
+          features: [
+            'Unlimited user accounts',
+            'Base 40 Functions/Events per month (customizable)',
+            'Advanced Reporting with Charts (exclusive feature)',
+            'Function Analytics Reports',
+            'Comprehensive business analytics',
+            'Premium priority support (phone + email)'
+          ]
+        }
+      ];
+
+      res.status(200).json({
+        success: true,
+        data: {
+          plans,
+          note: 'All subscription tiers include unlimited user accounts. Function limits are customizable by administrators.'
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching subscription plans:', error);
+      if (error instanceof Error) {
+        next(new ErrorResponse(`Failed to fetch subscription plans: ${error.message}`, 500));
+      } else {
+        next(new ErrorResponse('Failed to fetch subscription plans due to an unknown error', 500));
+      }
     }
   }
 );

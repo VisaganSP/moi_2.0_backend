@@ -8,6 +8,7 @@ This document provides comprehensive information about the MOI Software Online A
 - [Organization Endpoints](#organization-endpoints)
   - [Get Public Organizations](#get-public-organizations)
   - [Check Organization Exists](#check-organization-exists)
+  - [Get Subscription Plans](#get-subscription-plans)
   - [Get All Organizations](#get-all-organizations)
   - [Create Organization](#create-organization)
   - [Get Single Organization](#get-single-organization)
@@ -16,6 +17,8 @@ This document provides comprehensive information about the MOI Software Online A
   - [Get Organization Statistics](#get-organization-statistics)
   - [Get Superadmins](#get-superadmins)
   - [Manage Superadmin](#manage-superadmin)
+  - [Get Organization Subscription Status](#get-organization-subscription-status)
+  - [Update Organization Subscription](#update-organization-subscription)
 - [Authentication Endpoints](#authentication-endpoints)
   - [Register User](#register-user)
   - [Login User](#login-user)
@@ -125,13 +128,19 @@ All endpoints are relative to the base URL:
 http://localhost:5001/api
 ```
 
-## Organization Endpoints
+# Organization Endpoints
+
+## Overview
+
+The MOI Software Online API provides comprehensive organization management capabilities, including CRUD operations, subscription management, and superadmin controls. All organization-specific endpoints now use `org_name` as the unique identifier for better readability and consistency.
+
+## Public Endpoints
 
 ### Get Public Organizations
 
-Retrieves a list of all public organizations.
+Retrieves a list of all public organizations for login dropdown.
 
-- **URL**: `/organizations/public`
+- **URL**: `/api/organizations/public`
 - **Method**: `GET`
 - **Auth Required**: No
 - **Cache**: 300 seconds
@@ -150,12 +159,12 @@ curl -X GET http://localhost:5001/api/organizations/public
   "count": 2,
   "data": [
     {
-      "org_name": "publicorg1",
-      "display_name": "Public Org 1"
+      "org_name": "visaganorg",
+      "display_name": "Visagan Organization"
     },
     {
-      "org_name": "publicorg2",
-      "display_name": "Public Org 2"
+      "org_name": "testorg",
+      "display_name": "Test Organization"
     }
   ]
 }
@@ -165,14 +174,14 @@ curl -X GET http://localhost:5001/api/organizations/public
 
 Checks if an organization with the specified name already exists.
 
-- **URL**: `/organizations/check/:orgName`
+- **URL**: `/api/organizations/check/:orgName`
 - **Method**: `GET`
 - **Auth Required**: No
 
 **Example Request**:
 
 ```bash
-curl -X GET http://localhost:5001/api/organizations/check/exampleorg
+curl -X GET http://localhost:5001/api/organizations/check/visaganorg
 ```
 
 **Success Response**:
@@ -183,25 +192,115 @@ curl -X GET http://localhost:5001/api/organizations/check/exampleorg
   "exists": true,
   "data": {
     "org_id": "org_1721076935923",
-    "display_name": "Example Organization"
+    "display_name": "Visagan Organization"
   }
 }
 ```
 
-### Get All Organizations
+**Not Found Response**:
 
-Retrieves a list of all organizations. Requires superadmin privileges.
+```json
+{
+  "success": true,
+  "exists": false,
+  "data": null
+}
+```
 
-- **URL**: `/organizations`
+### Get Subscription Plans
+
+Retrieves detailed information about all available subscription plans with base recommendations.
+
+- **URL**: `/api/organizations/subscription-plans`
 - **Method**: `GET`
-- **Auth Required**: Yes (JWT Token + Superadmin)
-- **Cache**: 300 seconds
+- **Auth Required**: No
+- **Cache**: 3600 seconds (1 hour)
 
 **Example Request**:
 
 ```bash
-curl -X GET http://localhost:5001/api/organizations \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjIzNWRiZjk1NDk5ZGQ1MDQ2OTMxMiIsImlhdCI6MTc0NzA3Mjk3OCwiZXhwIjoxNzQ5NjY0OTc4fQ.Fc8FZpJnRAoN6v7d6eqNbRQFYugj1oh-3lLEh4kvYVk"
+curl -X GET http://localhost:5001/api/organizations/subscription-plans
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "plans": [
+      {
+        "plan": "basic",
+        "name": "Basic Tier",
+        "base_price": 2500,
+        "currency": "INR",
+        "billing_period": "monthly",
+        "base_functions": 10,
+        "features": [
+          "Unlimited user accounts",
+          "Base 10 Functions/Events per month (customizable)",
+          "Basic reporting features",
+          "Standard email support"
+        ]
+      },
+      {
+        "plan": "standard",
+        "name": "Standard Tier",
+        "base_price": 4500,
+        "currency": "INR",
+        "billing_period": "monthly",
+        "base_functions": 25,
+        "features": [
+          "Unlimited user accounts",
+          "Base 25 Functions/Events per month (customizable)",
+          "Function Analytics Reports included",
+          "Advanced reporting capabilities",
+          "Priority email support"
+        ]
+      },
+      {
+        "plan": "premium",
+        "name": "Premium Tier",
+        "base_price": 7500,
+        "currency": "INR",
+        "billing_period": "monthly",
+        "base_functions": 40,
+        "features": [
+          "Unlimited user accounts",
+          "Base 40 Functions/Events per month (customizable)",
+          "Advanced Reporting with Charts (exclusive feature)",
+          "Function Analytics Reports",
+          "Comprehensive business analytics",
+          "Premium priority support (phone + email)"
+        ]
+      }
+    ],
+    "note": "All subscription tiers include unlimited user accounts. Function limits are customizable by administrators."
+  }
+}
+```
+
+## Authenticated Endpoints
+
+### Get All Organizations
+
+Retrieves a list of all organizations with pagination and search. Requires superadmin privileges.
+
+- **URL**: `/api/organizations`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token + Superadmin)
+- **Cache**: 300 seconds
+
+**Query Parameters**:
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 10)
+- `search` (optional): Search term for org_name or display_name
+
+**Example Request**:
+
+```bash
+curl -X GET "http://localhost:5001/api/organizations?page=1&limit=10&search=visa" \
+  -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN"
 ```
 
 **Success Response**:
@@ -219,8 +318,8 @@ curl -X GET http://localhost:5001/api/organizations \
     {
       "_id": "687491c3c5163ff94f4c4fa4",
       "org_id": "org_1721076935923",
-      "org_name": "adminorg",
-      "display_name": "Admin Organization",
+      "org_name": "visaganorg",
+      "display_name": "Visagan Organization",
       "settings": {
         "allow_multiple_sessions": false,
         "session_timeout_minutes": 60
@@ -244,20 +343,11 @@ curl -X GET http://localhost:5001/api/organizations \
 }
 ```
 
-**Error Response**:
-
-```json
-{
-  "success": false,
-  "error": "Not authorized to access this route"
-}
-```
-
 ### Create Organization
 
 Creates a new organization. Requires superadmin privileges.
 
-- **URL**: `/organizations`
+- **URL**: `/api/organizations`
 - **Method**: `POST`
 - **Auth Required**: Yes (JWT Token + Superadmin)
 - **Content Type**: `application/json`
@@ -280,7 +370,7 @@ Creates a new organization. Requires superadmin privileges.
 ```bash
 curl -X POST http://localhost:5001/api/organizations \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjIzNWRiZjk1NDk5ZGQ1MDQ2OTMxMiIsImlhdCI6MTc0NzA3Mjk3OCwiZXhwIjoxNzQ5NjY0OTc4fQ.Fc8FZpJnRAoN6v7d6eqNbRQFYugj1oh-3lLEh4kvYVk" \
+  -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN" \
   -d '{
     "display_name": "New Organization",
     "org_name": "neworg",
@@ -322,9 +412,9 @@ curl -X POST http://localhost:5001/api/organizations \
 
 ### Get Single Organization
 
-Retrieves a specific organization by ID. Requires superadmin privileges.
+Retrieves a specific organization by org_name. Requires superadmin privileges.
 
-- **URL**: `/organizations/:id`
+- **URL**: `/api/organizations/:orgName`
 - **Method**: `GET`
 - **Auth Required**: Yes (JWT Token + Superadmin)
 - **Cache**: 300 seconds
@@ -332,8 +422,8 @@ Retrieves a specific organization by ID. Requires superadmin privileges.
 **Example Request**:
 
 ```bash
-curl -X GET http://localhost:5001/api/organizations/687491c3c5163ff94f4c4fa4 \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjIzNWRiZjk1NDk5ZGQ1MDQ2OTMxMiIsImlhdCI6MTc0NzA3Mjk3OCwiZXhwIjoxNzQ5NjY0OTc4fQ.Fc8FZpJnRAoN6v7d6eqNbRQFYugj1oh-3lLEh4kvYVk"
+curl -X GET http://localhost:5001/api/organizations/visaganorg \
+  -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN"
 ```
 
 **Success Response**:
@@ -344,8 +434,8 @@ curl -X GET http://localhost:5001/api/organizations/687491c3c5163ff94f4c4fa4 \
   "data": {
     "_id": "687491c3c5163ff94f4c4fa4",
     "org_id": "org_1721076935923",
-    "org_name": "adminorg",
-    "display_name": "Admin Organization",
+    "org_name": "visaganorg",
+    "display_name": "Visagan Organization",
     "settings": {
       "allow_multiple_sessions": false,
       "session_timeout_minutes": 60
@@ -361,15 +451,15 @@ curl -X GET http://localhost:5001/api/organizations/687491c3c5163ff94f4c4fa4 \
 ```json
 {
   "success": false,
-  "error": "Organization not found"
+  "error": "Organization not found with org_name of visaganorg"
 }
 ```
 
 ### Update Organization
 
-Updates a specific organization by ID. Requires superadmin privileges.
+Updates a specific organization by org_name. Requires superadmin privileges.
 
-- **URL**: `/organizations/:id`
+- **URL**: `/api/organizations/:orgName`
 - **Method**: `PUT`
 - **Auth Required**: Yes (JWT Token + Superadmin)
 - **Content Type**: `application/json`
@@ -382,24 +472,22 @@ Updates a specific organization by ID. Requires superadmin privileges.
   "settings": {
     "allow_multiple_sessions": true,
     "session_timeout_minutes": 120
-  },
-  "reason_for_edit": "Updating organization settings"
+  }
 }
 ```
 
 **Example Request**:
 
 ```bash
-curl -X PUT http://localhost:5001/api/organizations/687491c3c5163ff94f4c4fa4 \
+curl -X PUT http://localhost:5001/api/organizations/visaganorg \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjIzNWRiZjk1NDk5ZGQ1MDQ2OTMxMiIsImlhdCI6MTc0NzA3Mjk3OCwiZXhwIjoxNzQ5NjY0OTc4fQ.Fc8FZpJnRAoN6v7d6eqNbRQFYugj1oh-3lLEh4kvYVk" \
+  -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN" \
   -d '{
     "display_name": "Updated Organization Name",
     "settings": {
       "allow_multiple_sessions": true,
       "session_timeout_minutes": 120
-    },
-    "reason_for_edit": "Updating organization settings"
+    }
   }'
 ```
 
@@ -411,7 +499,7 @@ curl -X PUT http://localhost:5001/api/organizations/687491c3c5163ff94f4c4fa4 \
   "data": {
     "_id": "687491c3c5163ff94f4c4fa4",
     "org_id": "org_1721076935923",
-    "org_name": "adminorg",
+    "org_name": "visaganorg",
     "display_name": "Updated Organization Name",
     "settings": {
       "allow_multiple_sessions": true,
@@ -434,17 +522,17 @@ curl -X PUT http://localhost:5001/api/organizations/687491c3c5163ff94f4c4fa4 \
 
 ### Delete Organization
 
-Deletes a specific organization by ID. Requires superadmin privileges.
+Deletes a specific organization by org_name. Requires superadmin privileges.
 
-- **URL**: `/organizations/:id`
+- **URL**: `/api/organizations/:orgName`
 - **Method**: `DELETE`
 - **Auth Required**: Yes (JWT Token + Superadmin)
 
 **Example Request**:
 
 ```bash
-curl -X DELETE http://localhost:5001/api/organizations/687491c3c5163ff94f4c4fa4 \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjIzNWRiZjk1NDk5ZGQ1MDQ2OTMxMiIsImlhdCI6MTc0NzA3Mjk3OCwiZXhwIjoxNzQ5NjY0OTc4fQ.Fc8FZpJnRAoN6v7d6eqNbRQFYugj1oh-3lLEh4kvYVk"
+curl -X DELETE http://localhost:5001/api/organizations/visaganorg \
+  -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN"
 ```
 
 **Success Response**:
@@ -467,9 +555,9 @@ curl -X DELETE http://localhost:5001/api/organizations/687491c3c5163ff94f4c4fa4 
 
 ### Get Organization Statistics
 
-Retrieves statistics about organizations. Requires superadmin privileges.
+Retrieves statistics about organizations and user distribution. Requires superadmin privileges.
 
-- **URL**: `/organizations/stats`
+- **URL**: `/api/organizations/stats`
 - **Method**: `GET`
 - **Auth Required**: Yes (JWT Token + Superadmin)
 
@@ -477,7 +565,7 @@ Retrieves statistics about organizations. Requires superadmin privileges.
 
 ```bash
 curl -X GET http://localhost:5001/api/organizations/stats \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjIzNWRiZjk1NDk5ZGQ1MDQ2OTMxMiIsImlhdCI6MTc0NzA3Mjk3OCwiZXhwIjoxNzQ5NjY0OTc4fQ.Fc8FZpJnRAoN6v7d6eqNbRQFYugj1oh-3lLEh4kvYVk"
+  -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN"
 ```
 
 **Success Response**:
@@ -489,21 +577,18 @@ curl -X GET http://localhost:5001/api/organizations/stats \
     "total_organizations": 3,
     "organizations_by_users": [
       {
-        "_id": "687491c3c5163ff94f4c4fa4",
+        "org_name": "visaganorg",
         "count": 25,
-        "org_name": "adminorg",
-        "display_name": "Admin Organization"
+        "display_name": "Visagan Organization"
       },
       {
-        "_id": "687491e8c5163ff94f4c4fa5",
-        "count": 12,
         "org_name": "testorg",
+        "count": 12,
         "display_name": "Test Organization"
       },
       {
-        "_id": "687492a9c5163ff94f4c4fa6",
-        "count": 5,
         "org_name": "neworg",
+        "count": 5,
         "display_name": "New Organization"
       }
     ]
@@ -511,11 +596,13 @@ curl -X GET http://localhost:5001/api/organizations/stats \
 }
 ```
 
+## Superadmin Management
+
 ### Get Superadmins
 
 Retrieves a list of all superadmins. Requires superadmin privileges.
 
-- **URL**: `/organizations/superadmins`
+- **URL**: `/api/organizations/superadmins`
 - **Method**: `GET`
 - **Auth Required**: Yes (JWT Token + Superadmin)
 
@@ -523,7 +610,7 @@ Retrieves a list of all superadmins. Requires superadmin privileges.
 
 ```bash
 curl -X GET http://localhost:5001/api/organizations/superadmins \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjIzNWRiZjk1NDk5ZGQ1MDQ2OTMxMiIsImlhdCI6MTc0NzA3Mjk3OCwiZXhwIjoxNzQ5NjY0OTc4fQ.Fc8FZpJnRAoN6v7d6eqNbRQFYugj1oh-3lLEh4kvYVk"
+  -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN"
 ```
 
 **Success Response**:
@@ -551,9 +638,9 @@ curl -X GET http://localhost:5001/api/organizations/superadmins \
 
 ### Manage Superadmin
 
-Adds or removes a user's superadmin privileges. Requires superadmin privileges.
+Promotes or demotes a user's superadmin privileges. Requires superadmin privileges.
 
-- **URL**: `/organizations/superadmins`
+- **URL**: `/api/organizations/superadmins`
 - **Method**: `POST`
 - **Auth Required**: Yes (JWT Token + Superadmin)
 - **Content Type**: `application/json`
@@ -563,7 +650,7 @@ Adds or removes a user's superadmin privileges. Requires superadmin privileges.
 ```json
 {
   "userId": "682235dbf95499dd50469314",
-  "action": "promote" // or "demote"
+  "action": "promote"
 }
 ```
 
@@ -572,7 +659,7 @@ Adds or removes a user's superadmin privileges. Requires superadmin privileges.
 ```bash
 curl -X POST http://localhost:5001/api/organizations/superadmins \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjIzNWRiZjk1NDk5ZGQ1MDQ2OTMxMiIsImlhdCI6MTc0NzA3Mjk3OCwiZXhwIjoxNzQ5NjY0OTc4fQ.Fc8FZpJnRAoN6v7d6eqNbRQFYugj1oh-3lLEh4kvYVk" \
+  -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN" \
   -d '{
     "userId": "682235dbf95499dd50469314",
     "action": "promote"
@@ -605,29 +692,23 @@ curl -X POST http://localhost:5001/api/organizations/superadmins \
 }
 ```
 
-# Organization Subscription API Endpoints
-
-## Overview
-
-The MOI Software Online API now includes a subscription system that limits the number of functions (events) each organization can create. This document outlines the new endpoints added to support this feature.
-
-## Subscription Endpoints
+## Organization Subscription Management
 
 ### Get Organization Subscription Status
 
-Retrieves the subscription status for an organization.
+Retrieves the subscription status for an organization. Accessible by:
+- SuperAdmins (can access any organization)
+- Admins (can access any organization)  
+- Regular users (can access their own organization only)
 
-- **URL**: `/api/organizations/:id/subscription`
+- **URL**: `/api/organizations/:orgName/subscription`
 - **Method**: `GET`
-- **Auth Required**: Yes (JWT Token - Admin for any org, or regular user for their own org)
-
-**Parameters**:
-- `id` (path parameter): The organization ID to retrieve subscription information for
+- **Auth Required**: Yes (JWT Token)
 
 **Example Request**:
 
 ```bash
-curl -X GET http://localhost:5001/api/organizations/org_1721076935923/subscription \
+curl -X GET http://localhost:5001/api/organizations/visaganorg/subscription \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
@@ -638,13 +719,21 @@ curl -X GET http://localhost:5001/api/organizations/org_1721076935923/subscripti
   "success": true,
   "data": {
     "org_id": "org_1721076935923",
-    "org_name": "adminorg",
-    "display_name": "Admin Organization",
+    "org_name": "visaganorg",
+    "display_name": "Visagan Organization",
     "subscription": {
+      "subscription_plan": "basic",
       "max_functions": 10,
       "functions_created": 7,
       "functions_remaining": 3,
       "last_updated": "2025-07-14T15:30:45.678Z"
+    },
+    "plan_details": {
+      "plan_name": "basic",
+      "plan_display_name": "Basic Tier",
+      "base_price": 2500,
+      "base_functions": 10,
+      "currency": "INR"
     }
   }
 }
@@ -655,38 +744,62 @@ curl -X GET http://localhost:5001/api/organizations/org_1721076935923/subscripti
 ```json
 {
   "success": false,
-  "error": "Organization not found with id of org_1721076935923"
+  "error": "Not authorized to access this organization subscription"
 }
 ```
 
 ### Update Organization Subscription Limits
 
-Updates the maximum number of functions an organization can create. Superadmin only.
+Updates the subscription plan and/or maximum number of functions an organization can create. Superadmin only.
 
-- **URL**: `/api/organizations/:id/subscription`
+- **URL**: `/api/organizations/:orgName/subscription`
 - **Method**: `PUT`
 - **Auth Required**: Yes (JWT Token with Superadmin privileges)
 - **Content Type**: `application/json`
 
-**Parameters**:
-- `id` (path parameter): The organization ID to update subscription limits for
+**Request Body Options**:
 
-**Request Body**:
-
+**Option 1: Update subscription plan (automatically sets max_functions)**
 ```json
 {
-  "max_functions": 20
+  "subscription_plan": "standard"
 }
 ```
 
-**Example Request**:
+**Option 2: Update max_functions only (keeps existing plan)**
+```json
+{
+  "max_functions": 50
+}
+```
+
+**Option 3: Update both (max_functions must match plan limits)**
+```json
+{
+  "subscription_plan": "premium",
+  "max_functions": 40
+}
+```
+
+**Example Request (Change to Standard Plan):**
 
 ```bash
-curl -X PUT http://localhost:5001/api/organizations/org_1721076935923/subscription \
+curl -X PUT http://localhost:5001/api/organizations/visaganorg/subscription \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN" \
   -d '{
-    "max_functions": 20
+    "subscription_plan": "standard"
+  }'
+```
+
+**Example Request (Custom max_functions):**
+
+```bash
+curl -X PUT http://localhost:5001/api/organizations/visaganorg/subscription \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN" \
+  -d '{
+    "max_functions": 50
   }'
 ```
 
@@ -697,33 +810,86 @@ curl -X PUT http://localhost:5001/api/organizations/org_1721076935923/subscripti
   "success": true,
   "data": {
     "org_id": "org_1721076935923",
-    "org_name": "adminorg",
+    "org_name": "visaganorg",
     "subscription": {
-      "max_functions": 20,
+      "subscription_plan": "standard",
+      "max_functions": 25,
       "functions_created": 7,
-      "functions_remaining": 13,
+      "functions_remaining": 18,
       "last_updated": "2025-07-14T16:45:12.345Z"
+    },
+    "plan_details": {
+      "plan_name": "standard",
+      "monthly_price": 4500,
+      "currency": "INR"
     }
   }
 }
 ```
 
-**Error Response**:
+**Error Responses**:
 
 ```json
 {
   "success": false,
-  "error": "Valid max_functions value is required"
+  "error": "Invalid subscription plan. Must be basic, standard, or premium"
 }
 ```
 
+```json
+{
+  "success": false,
+  "error": "max_functions for standard plan must be 25"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "max_functions must be a positive number"
+}
+```
+
+## Subscription Plans
+
+The MOI Software Online API now includes a comprehensive subscription system with three tiers:
+
+### Available Plans
+
+1. **Basic Tier - ₹2,500/month**
+   - 10 Functions/Events per month
+   - Unlimited user accounts
+   - Basic reporting features
+   - Standard email support
+
+2. **Standard Tier - ₹4,500/month**  
+   - 25 Functions/Events per month
+   - Unlimited user accounts
+   - Function Analytics Reports included
+   - Advanced reporting capabilities
+   - Priority email support
+
+3. **Premium Tier - ₹7,500/month**
+   - 40 Functions/Events per month
+   - Unlimited user accounts
+   - Advanced Reporting with Charts (exclusive feature)
+   - Function Analytics Reports
+   - Comprehensive business analytics
+   - Premium priority support (phone + email)
+
+### Plan Management
+
+- **Default Plan**: New organizations are automatically assigned the "basic" plan
+- **Plan Changes**: SuperAdmins can upgrade/downgrade organizations to any plan
+- **Custom Limits**: SuperAdmins can set custom `max_functions` beyond standard plan limits
+- **Auto-Enforcement**: The system automatically enforces function creation limits based on the active plan
+
 ## Function Creation Limit Check
 
-When an organization attempts to create a new function, the system now checks if they have reached their limit:
+When an organization attempts to create a new function, the system checks subscription limits:
 
-1. If the organization has not reached its limit (`functions_created < max_functions`), the function is created normally, and the `functions_created` counter is incremented.
-
-2. If the organization has reached its limit (`functions_created >= max_functions`), the function creation is rejected with the following error message:
+1. **Within Limit**: If `functions_created < max_functions`, the function is created and counter incremented
+2. **Limit Reached**: If `functions_created >= max_functions`, creation is rejected with:
 
 ```json
 {
@@ -732,15 +898,20 @@ When an organization attempts to create a new function, the system now checks if
 }
 ```
 
-## Organization Schema Changes
+## Data Schema
 
-The Organization schema has been updated to include subscription data:
+### Organization Schema (Subscription Fields)
 
 ```typescript
 subscription: {
+  subscription_plan: {
+    type: String,
+    enum: ['basic', 'standard', 'premium'],
+    default: 'basic'
+  },
   max_functions: {
     type: Number,
-    default: 10, // Default limit is 10 functions
+    default: 10,
     min: 0
   },
   functions_created: {
@@ -759,22 +930,75 @@ subscription: {
 }
 ```
 
-## Migration
+### Subscription Plan Constants
 
-A migration script (`scripts/add-subscription-to-orgs.js`) is provided to add subscription data to existing organizations. The script:
-
-1. Finds all organizations in the database
-2. For each organization without subscription data:
-   - Counts existing functions in the organization's collection
-   - Sets the `max_functions` to at least 10 or current count + 5
-   - Sets the `functions_created` to the current count
-   - Updates the organization with the new subscription data
-
-To run the migration:
-
-```bash
-node scripts/add-subscription-to-orgs.js
+```typescript
+const SUBSCRIPTION_LIMITS = {
+  basic: { max_functions: 10, price: 2500 },
+  standard: { max_functions: 25, price: 4500 },
+  premium: { max_functions: 40, price: 7500 }
+};
 ```
+
+## Authentication & Authorization
+
+### Access Levels
+
+1. **Public**: No authentication required
+   - Get public organizations
+   - Check organization exists
+   - Get subscription plans
+
+2. **Authenticated**: Valid JWT token required
+   - Get own organization subscription
+
+3. **Admin**: JWT token + `isAdmin: true`
+   - Can access any organization subscription
+
+4. **SuperAdmin**: JWT token + `isSuperAdmin: true`
+   - Full access to all endpoints
+   - Can modify subscription limits and plans
+   - Can manage other superadmins
+
+### JWT Token Format
+
+Include the JWT token in the Authorization header:
+
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+The token should contain:
+- `id`: User ID
+- `org_name`: User's organization name
+- `isAdmin`: Admin status (optional)
+- `isSuperAdmin`: SuperAdmin status (optional)
+
+## Error Responses
+
+All endpoints return consistent error responses:
+
+```json
+{
+  "success": false,
+  "error": "Error message description"
+}
+```
+
+Common HTTP status codes:
+- `200`: Success
+- `201`: Created
+- `400`: Bad Request
+- `401`: Unauthorized
+- `403`: Forbidden
+- `404`: Not Found
+- `500`: Internal Server Error
+
+## Rate Limiting & Caching
+
+- **Cache**: Some GET endpoints are cached for 300 seconds (5 minutes)
+- **Rate Limiting**: Apply standard API rate limiting practices
+- **Cache Invalidation**: Automatic cache invalidation on data modifications
 
 ## Authentication Endpoints
 

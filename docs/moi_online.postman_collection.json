@@ -120,7 +120,7 @@
 								"header": [
 									{
 										"key": "Authorization",
-										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzQ5MjQ1YzUxNjNmZjk0ZjRjNGZhNSIsIm9yZ19pZCI6IjY4NzQ5MWMzYzUxNjNmZjk0ZjRjNGZhNCIsIm9yZ19uYW1lIjoiQWRtaW4gT3JnYW5pemF0aW9uIiwiaWF0IjoxNzUyNDgyMTk1LCJleHAiOjE3NTUwNzQxOTV9.03Hw-KGjhJVf-PUrnFoddOpqCFMRH4J0IKPvmUD6FTc"
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzRhYzJjMTkyMjg4YTMwOTdkZGZmNiIsIm9yZ19pZCI6IjY4NzRhYjlkMTkyMjg4YTMwOTdkZGZlMyIsIm9yZ19uYW1lIjoidmlzYWdhbm9yZyIsImlhdCI6MTc1MzA5MzYyNCwiZXhwIjoxNzU1Njg1NjI0fQ.VxJYzcZMLdyGLgHA1MkayWuFBwrh3Gsx5g--_tvlt0Y"
 									}
 								],
 								"url": {
@@ -255,11 +255,11 @@
 								"header": [
 									{
 										"key": "Authorization",
-										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzRhYzJjMTkyMjg4YTMwOTdkZGZmNiIsIm9yZ19pZCI6IjY4NzRhYjlkMTkyMjg4YTMwOTdkZGZlMyIsIm9yZ19uYW1lIjoidmlzYWdhbm9yZyIsImlhdCI6MTc1MzA3NjM2OCwiZXhwIjoxNzU1NjY4MzY4fQ.-TinEFHLaTqbayk2DLwbxL--pFUviSQQmy4bIhn3xyo"
 									}
 								],
 								"url": {
-									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/payment-methods",
+									"raw": "http://localhost:5001/api/functions/திருமண_விழா-ராஜேந்திரன்_சரவணன்-கோயம்புத்தூர்-2025-07-25-11:00_am/payment-methods",
 									"protocol": "http",
 									"host": [
 										"localhost"
@@ -268,7 +268,7 @@
 									"path": [
 										"api",
 										"functions",
-										"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+										"திருமண_விழா-ராஜேந்திரன்_சரவணன்-கோயம்புத்தூர்-2025-07-25-11:00_am",
 										"payment-methods"
 									]
 								}
@@ -282,11 +282,11 @@
 								"header": [
 									{
 										"key": "Authorization",
-										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzRhYzJjMTkyMjg4YTMwOTdkZGZmNiIsIm9yZ19pZCI6IjY4NzRhYjlkMTkyMjg4YTMwOTdkZGZlMyIsIm9yZ19uYW1lIjoidmlzYWdhbm9yZyIsImlhdCI6MTc1MzA3NjM2OCwiZXhwIjoxNzU1NjY4MzY4fQ.-TinEFHLaTqbayk2DLwbxL--pFUviSQQmy4bIhn3xyo"
 									}
 								],
 								"url": {
-									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/relation-distribution",
+									"raw": "http://localhost:5001/api/functions/திருமண_விழா-ராஜேந்திரன்_சரவணன்-கோயம்புத்தூர்-2025-07-25-11:00_am/relation-distribution",
 									"protocol": "http",
 									"host": [
 										"localhost"
@@ -295,7 +295,7 @@
 									"path": [
 										"api",
 										"functions",
-										"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+										"திருமண_விழா-ராஜேந்திரன்_சரவணன்-கோயம்புத்தூர்-2025-07-25-11:00_am",
 										"relation-distribution"
 									]
 								}
@@ -835,12 +835,12 @@
 							},
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzRhNDk5ODAwYWQ3YmViOTY1ZjdlMCIsIm9yZ19pZCI6IjY4NzQ5YTNiZGE1N2IxNzcwYzQxZDk5MiIsIm9yZ19uYW1lIjoibW9pb3JnYW5pemF0aW9uMSIsImlhdCI6MTc1MjQ3OTc3OSwiZXhwIjoxNzU1MDcxNzc5fQ.Kk91gLSI5pUr3PiDpUHoST9COFKCXmgN2rFsUmPAPCI"
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzRhYzJjMTkyMjg4YTMwOTdkZGZmNiIsIm9yZ19pZCI6IjY4NzRhYjlkMTkyMjg4YTMwOTdkZGZlMyIsIm9yZ19uYW1lIjoidmlzYWdhbm9yZyIsImlhdCI6MTc1Mzc3MTg1NiwiZXhwIjoxNzU2MzYzODU2fQ.XlBg79axYEgg6aqAKACiFIDvI4NtwHvBNLcu_ckqwZg"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"function_name\": \"werrtyuytgrfetwesyui\",\n    \"function_owner_name\": \"Doe\",\n    \"function_owner_city\": \"Madurai\",\n    \"function_owner_address\": \"123 Main St\",\n    \"function_owner_phno\": \"9876543210\",\n    \"function_amt_spent\": 400000,\n    \"function_hero_name\": \"Groom Name\",\n    \"function_heroine_name\": \"Bride Name\",\n    \"function_held_place\": \"Golden Palace\",\n    \"function_held_city\": \"Theni\",\n    \"function_start_date\": \"2025-06-15T00:00:00.000Z\",\n    \"function_start_time\": \"11:00 AM\",\n    \"function_end_date\": \"2025-06-15T00:00:00.000Z\",\n    \"function_end_time\": \"10:00 PM\",\n    \"function_total_days\": 1,\n    \"function_bill_details\": {\n      \"owner_name\": \"John Doe\",\n      \"owner_occupation\": \"Software Engineer\",\n      \"wife_name\": \"Jane Doe\",\n      \"wife_occupation\": \"Doctor\",\n      \"function_place\": \"Golden Palace\",\n      \"function_city\": \"Chennai\"\n    }\n  }",
+							"raw": "{\n    \"function_name\": \"wedding-anniversary1\",\n    \"function_owner_name\": \"Doe\",\n    \"function_owner_city\": \"Madurai\",\n    \"function_owner_address\": \"123 Main St\",\n    \"function_owner_phno\": \"9876543210\",\n    \"function_amt_spent\": 400000,\n    \"function_hero_name\": \"Groom Name\",\n    \"function_heroine_name\": \"Bride Name\",\n    \"function_held_place\": \"Golden Palace\",\n    \"function_held_city\": \"Theni\",\n    \"function_start_date\": \"2025-06-15T00:00:00.000Z\",\n    \"function_start_time\": \"11:00 AM\",\n    \"function_end_date\": \"2025-06-15T00:00:00.000Z\",\n    \"function_end_time\": \"10:00 PM\",\n    \"function_total_days\": 1,\n    \"function_bill_details\": {\n      \"owner_name\": \"John Doe\",\n      \"owner_occupation\": \"Software Engineer\",\n      \"wife_name\": \"Jane Doe\",\n      \"wife_occupation\": \"Doctor\",\n      \"function_place\": \"Golden Palace\",\n      \"function_city\": \"Chennai\"\n    }\n  }",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1256,11 +1256,11 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MmRjZWNjNWY2MWI0NDFiODZjMmEwOCIsImlhdCI6MTc0NzgzMjUyNCwiZXhwIjoxNzUwNDI0NTI0fQ.YwSg35AugiEYxM8vXr5tOCKTmt1R1O314UI2ac2PLU4"
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzRhYzJjMTkyMjg4YTMwOTdkZGZmNiIsIm9yZ19pZCI6IjY4NzRhYjlkMTkyMjg4YTMwOTdkZGZlMyIsIm9yZ19uYW1lIjoidmlzYWdhbm9yZyIsImlhdCI6MTc1MzE4NjQ2OCwiZXhwIjoxNzU1Nzc4NDY4fQ.xKYkTIxEysuPkrzAeDmU8TSawPohE_vDAbB3daQ-Kos"
 							}
 						],
 						"url": {
-							"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/denominations-payment-methods",
+							"raw": "http://localhost:5001/api/functions/நிறுவன_விழா-visagan-madurai-2025-07-20-2025-07-21t09:51:13.421z/denominations-payment-methods",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -1269,7 +1269,7 @@
 							"path": [
 								"api",
 								"functions",
-								"திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am",
+								"நிறுவன_விழா-visagan-madurai-2025-07-20-2025-07-21t09:51:13.421z",
 								"denominations-payment-methods"
 							]
 						}
@@ -1372,7 +1372,7 @@
 								"header": [
 									{
 										"key": "Authorization",
-										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjM4ZjNhMzkxZDM0NTgwODc1YTM2NCIsImlhdCI6MTc0NzE2MTE2OCwiZXhwIjoxNzQ5NzUzMTY4fQ.9lxz_04WLeLgMQFsqHISB0iMX7p5vGp8Co_Wc3gxXOA"
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzRhYzJjMTkyMjg4YTMwOTdkZGZmNiIsIm9yZ19pZCI6IjY4NzRhYjlkMTkyMjg4YTMwOTdkZGZlMyIsIm9yZ19uYW1lIjoidmlzYWdhbm9yZyIsImlhdCI6MTc1MzE2Njg1MywiZXhwIjoxNzU1NzU4ODUzfQ.8k2T38FyAHxj1XumOCDHijdfiHOlnbvNORiVmPswzFM"
 									}
 								],
 								"url": {
@@ -1515,7 +1515,7 @@
 									}
 								],
 								"url": {
-									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/payers/search?searchParam=payer_work&searchQuery=அழகு&searchType=startsWith",
+									"raw": "http://localhost:5001/api/functions/திருமண_விழா-முருகன்_சுப்பிரமணியம்-சென்னை-2025-06-15-10:00_am/payers/search?searchParam=payer_work&searchQuery=அழகு&sezA ̑archType=startsWith",
 									"protocol": "http",
 									"host": [
 										"localhost"
@@ -1538,7 +1538,7 @@
 											"value": "அழகு"
 										},
 										{
-											"key": "searchType",
+											"key": "sezA ̑archType",
 											"value": "startsWith"
 										}
 									]
@@ -1895,11 +1895,11 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzRhNDk5ODAwYWQ3YmViOTY1ZjdlMCIsIm9yZ19pZCI6IjY4NzQ5YTNiZGE1N2IxNzcwYzQxZDk5MiIsIm9yZ19uYW1lIjoibW9pb3JnYW5pemF0aW9uMSIsImlhdCI6MTc1MjQ3OTc3OSwiZXhwIjoxNzU1MDcxNzc5fQ.Kk91gLSI5pUr3PiDpUHoST9COFKCXmgN2rFsUmPAPCI"
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzRhYzJjMTkyMjg4YTMwOTdkZGZmNiIsIm9yZ19pZCI6IjY4NzRhYjlkMTkyMjg4YTMwOTdkZGZlMyIsIm9yZ19uYW1lIjoidmlzYWdhbm9yZyIsImlhdCI6MTc1MzE4NjQ2OCwiZXhwIjoxNzU1Nzc4NDY4fQ.xKYkTIxEysuPkrzAeDmU8TSawPohE_vDAbB3daQ-Kos"
 							}
 						],
 						"url": {
-							"raw": "http://localhost:5001/api/payers?function_id=werrtyuytgrfetwesyui-doe-theni-2025-06-15-11:00_am&page=1&limit=100",
+							"raw": "http://localhost:5001/api/payers?function_id=நிறுவன_விழா-visagan-madurai-2025-07-20-2025-07-21t09:51:13.421z&page=1&limit=2000",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -1912,7 +1912,7 @@
 							"query": [
 								{
 									"key": "function_id",
-									"value": "werrtyuytgrfetwesyui-doe-theni-2025-06-15-11:00_am"
+									"value": "நிறுவன_விழா-visagan-madurai-2025-07-20-2025-07-21t09:51:13.421z"
 								},
 								{
 									"key": "page",
@@ -1920,7 +1920,7 @@
 								},
 								{
 									"key": "limit",
-									"value": "100"
+									"value": "2000"
 								}
 							]
 						}
@@ -2481,7 +2481,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzQ5MjQ1YzUxNjNmZjk0ZjRjNGZhNSIsIm9yZ19pZCI6IjY4NzQ5MWMzYzUxNjNmZjk0ZjRjNGZhNCIsIm9yZ19uYW1lIjoiQWRtaW4gT3JnYW5pemF0aW9uIiwiaWF0IjoxNzUyNDcyMDMxLCJleHAiOjE3NTUwNjQwMzF9.0OCFor69-da0aUU3ykrQF7UFO4R-zlHpVGnD59ZM3jQ"
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzQ5MjQ1YzUxNjNmZjk0ZjRjNGZhNSIsIm9yZ19pZCI6IjY4NzQ5MWMzYzUxNjNmZjk0ZjRjNGZhNCIsIm9yZ19uYW1lIjoiQWRtaW4gT3JnYW5pemF0aW9uIiwiaWF0IjoxNzUyNTA3NDM2LCJleHAiOjE3NTUwOTk0MzZ9.orhZVAOr0KCWj1XTX1EhCwnQy6nnEpZEhCf7ofygxQw"
 							}
 						],
 						"url": {
@@ -2574,12 +2574,12 @@
 							},
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzQ5MjQ1YzUxNjNmZjk0ZjRjNGZhNSIsIm9yZ19pZCI6IjY4NzQ5MWMzYzUxNjNmZjk0ZjRjNGZhNCIsIm9yZ19uYW1lIjoiQWRtaW4gT3JnYW5pemF0aW9uIiwiaWF0IjoxNzUyNDcyMDMxLCJleHAiOjE3NTUwNjQwMzF9.0OCFor69-da0aUU3ykrQF7UFO4R-zlHpVGnD59ZM3jQ"
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzQ5MjQ1YzUxNjNmZjk0ZjRjNGZhNSIsIm9yZ19pZCI6IjY4NzQ5MWMzYzUxNjNmZjk0ZjRjNGZhNCIsIm9yZ19uYW1lIjoiQWRtaW4gT3JnYW5pemF0aW9uIiwiaWF0IjoxNzUzNzY4NzU4LCJleHAiOjE3NTYzNjA3NTh9.fMcsVfdhjVrIYrRoD9n1I5864tJxnkLbqTtvcNJzyGk"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"display_name\": \"Updated Moi Organization 1\",\n    \"settings\": {\n      \"allow_multiple_sessions\": true,\n      \"session_timeout_minutes\": 120\n    },\n    \"reason_for_edit\": \"Updating organization settings\"\n  }",
+							"raw": "{\n    \"display_name\": \" Updated Again Moi Organization 1\",\n    \"settings\": {\n      \"allow_multiple_sessions\": false,\n      \"session_timeout_minutes\": 120\n    },\n    \"reason_for_edit\": \"Updating organization settings\"\n  }",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2587,7 +2587,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:5001/api/organizations/68749a3bda57b1770c41d992",
+							"raw": "http://localhost:5001/api/organizations/moiorganization1",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -2596,7 +2596,7 @@
 							"path": [
 								"api",
 								"organizations",
-								"68749a3bda57b1770c41d992"
+								"moiorganization1"
 							]
 						}
 					},
@@ -2635,7 +2635,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzQ5MjQ1YzUxNjNmZjk0ZjRjNGZhNSIsIm9yZ19pZCI6IjY4NzQ5MWMzYzUxNjNmZjk0ZjRjNGZhNCIsIm9yZ19uYW1lIjoiQWRtaW4gT3JnYW5pemF0aW9uIiwiaWF0IjoxNzUyNDcyMDMxLCJleHAiOjE3NTUwNjQwMzF9.0OCFor69-da0aUU3ykrQF7UFO4R-zlHpVGnD59ZM3jQ"
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ODg1YWJlMDAwN2RkMDMzNzNmMzA0OCIsIm9yZ19pZCI6IjY4NzRhYjlkMTkyMjg4YTMwOTdkZGZlMyIsIm9yZ19uYW1lIjoidmlzYWdhbm9yZyIsImlhdCI6MTc1Mzc2NzE1NywiZXhwIjoxNzU2MzU5MTU3fQ.E_SFZI4Hflf8QyqmgdnxUxY-cAsxwjRyKKzCV4OJyoY"
 							}
 						],
 						"url": {
@@ -2718,6 +2718,76 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "GetOrganizationSubscription",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzQ5MjQ1YzUxNjNmZjk0ZjRjNGZhNSIsIm9yZ19pZCI6IjY4NzQ5MWMzYzUxNjNmZjk0ZjRjNGZhNCIsIm9yZ19uYW1lIjoiQWRtaW4gT3JnYW5pemF0aW9uIiwiaWF0IjoxNzUzNzY4NzU4LCJleHAiOjE3NTYzNjA3NTh9.fMcsVfdhjVrIYrRoD9n1I5864tJxnkLbqTtvcNJzyGk"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/organizations/visaganorg/subscription",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"organizations",
+								"visaganorg",
+								"subscription"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UpdateOrganizationSubscription",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzQ5MjQ1YzUxNjNmZjk0ZjRjNGZhNSIsIm9yZ19pZCI6IjY4NzQ5MWMzYzUxNjNmZjk0ZjRjNGZhNCIsIm9yZ19uYW1lIjoiQWRtaW4gT3JnYW5pemF0aW9uIiwiaWF0IjoxNzUzNzg3NDk4LCJleHAiOjE3NTYzNzk0OTh9.5O4RyxvW_BeIJAeNkLNcrrGqdqkQkRe9iPOXtQzCQz4"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"max_functions\": 10,\n    \"subscription_plan\": \"basic\"\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5001/api/organizations/visaganorg/subscription",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"organizations",
+								"visaganorg",
+								"subscription"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -2783,7 +2853,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"username\": \"user\",\n    \"email\": \"someuser@example.com\",\n    \"password\": \"password123\",\n    \"org_name\": \"visaganorg\",\n    \"isAdmin\": false\n  }",
+							"raw": "{\n    \"username\": \"ramji\",\n    \"email\": \"ramji@example.com\",\n    \"password\": \"password123\",\n    \"org_name\": \"visaganorg\"\n  }",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2841,6 +2911,78 @@
 								"auth",
 								"register",
 								"admin"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Subscription Endpoints",
+			"item": [
+				{
+					"name": "GetOrgSubscriptionStatus",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzRhNDk5ODAwYWQ3YmViOTY1ZjdlMCIsIm9yZ19pZCI6IjY4NzQ5YTNiZGE1N2IxNzcwYzQxZDk5MiIsIm9yZ19uYW1lIjoibW9pb3JnYW5pemF0aW9uMSIsImlhdCI6MTc1MjUwNzMzNSwiZXhwIjoxNzU1MDk5MzM1fQ.z-MMNgv4gGLu0Jz9BE2XinZbAhZ_gF_J278l-BSe3Ec"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:5001/api/organizations/org_1752476573924/subscription",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"organizations",
+								"org_1752476573924",
+								"subscription"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UpdateOrgSubscriptionLimits",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzQ5MjQ1YzUxNjNmZjk0ZjRjNGZhNSIsIm9yZ19pZCI6IjY4NzQ5MWMzYzUxNjNmZjk0ZjRjNGZhNCIsIm9yZ19uYW1lIjoiQWRtaW4gT3JnYW5pemF0aW9uIiwiaWF0IjoxNzUyNTEzNTM2LCJleHAiOjE3NTUxMDU1MzZ9.0bw8JozrUiwxhqJ91yLE4x3zdysU-0YXaRP07aij-Fc"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"max_functions\": 5\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5001/api/organizations/org_1752476573924/subscription",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5001",
+							"path": [
+								"api",
+								"organizations",
+								"org_1752476573924",
+								"subscription"
 							]
 						}
 					},
