@@ -1,6 +1,8 @@
+// src/config/db.ts
+
 import mongoose from 'mongoose';
 import { logger } from '../utils/logger';
-import { createAllIndexes } from './database/indexes';
+import { createAllIndexes } from './database/org_indexes';
 
 const connectDB = async (): Promise<void> => {
   try {
@@ -15,7 +17,9 @@ const connectDB = async (): Promise<void> => {
     logger.info(`MongoDB Connected: ${conn.connection.host}`);
 
     // Create indexes after connection
-    // await createAllIndexes();
+    await createAllIndexes();
+    
+    logger.info('Database initialization completed successfully');
   } catch (error) {
     if (error instanceof Error) {
       logger.error(`Error: ${error.message}`);

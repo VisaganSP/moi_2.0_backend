@@ -8,7 +8,7 @@ const FunctionSchema: Schema = new Schema(
       required: [true, 'Function name is required'],
       trim: true
     },
-      function_id: {
+    function_id: {
       type: String,
       unique: true, // Ensure uniqueness
       required: true
@@ -103,6 +103,75 @@ const FunctionSchema: Schema = new Schema(
       function_city: {
         type: String,
         trim: true
+      },
+      
+      // NEW: Logo image stored as base64 string
+      logo_image: { 
+        type: String,
+        validate: {
+          validator: function(v: string): boolean {
+            if (!v) return true; // Allow empty values
+            // Validate base64 image format
+            return /^data:image\/(jpeg|jpg|png|gif);base64,/.test(v);
+          },
+          message: 'Logo image must be a valid base64 encoded image (JPEG, PNG, or GIF)'
+        }
+      },
+      
+      // NEW: Advertisement settings
+      advertisement_settings: {
+        ad_title: { 
+          type: String, 
+          default: 'MOITECH',
+          trim: true,
+          maxlength: [100, 'Advertisement title cannot exceed 100 characters']
+        },
+        ad_subtitle: { 
+          type: String, 
+          default: 'For all your tech needs',
+          trim: true,
+          maxlength: [200, 'Advertisement subtitle cannot exceed 200 characters']
+        },
+        ad_phone: { 
+          type: String, 
+          default: '7339124748, 9894454345',
+          trim: true,
+          maxlength: [100, 'Advertisement phone cannot exceed 100 characters']
+        }
+      },
+      
+      // NEW: Font settings with validation
+      font_settings: {
+        base_font_size: { 
+          type: Number, 
+          default: 12,
+          min: [8, 'Base font size cannot be less than 8px'],
+          max: [20, 'Base font size cannot exceed 20px']
+        },
+        company_name_size: { 
+          type: Number, 
+          default: 14,
+          min: [10, 'Company name font size cannot be less than 10px'],
+          max: [24, 'Company name font size cannot exceed 24px']
+        },
+        header_size: { 
+          type: Number, 
+          default: 12,
+          min: [8, 'Header font size cannot be less than 8px'],
+          max: [18, 'Header font size cannot exceed 18px']
+        },
+        customer_name_size: { 
+          type: Number, 
+          default: 16,
+          min: [10, 'Customer name font size cannot be less than 10px'],
+          max: [22, 'Customer name font size cannot exceed 22px']
+        },
+        amount_size: { 
+          type: Number, 
+          default: 18,
+          min: [12, 'Amount font size cannot be less than 12px'],
+          max: [24, 'Amount font size cannot exceed 24px']
+        }
       }
     },
     created_by: {

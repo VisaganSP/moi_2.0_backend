@@ -14,6 +14,7 @@ import authRoutes from './routes/auth.routes';
 import functionRoutes from './routes/function.routes';
 import payerRoutes from './routes/payer.routes';
 import editLogRoutes from './routes/editLog.routes';
+import organizationRoutes from './routes/organization.routes';
 
 // Import DB and Redis connections
 import connectDB from './config/db';
@@ -44,6 +45,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Routes
+app.use('/api/organizations', organizationRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/functions', functionRoutes);
 app.use('/api/payers', payerRoutes);

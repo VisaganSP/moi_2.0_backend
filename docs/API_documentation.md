@@ -5,10 +5,26 @@ This document provides comprehensive information about the MOI Software Online A
 
 ## Table of Contents
 
+- [Organization Endpoints](#organization-endpoints)
+  - [Get Public Organizations](#get-public-organizations)
+  - [Check Organization Exists](#check-organization-exists)
+  - [Get Subscription Plans](#get-subscription-plans)
+  - [Get All Organizations](#get-all-organizations)
+  - [Create Organization](#create-organization)
+  - [Get Single Organization](#get-single-organization)
+  - [Update Organization](#update-organization)
+  - [Delete Organization](#delete-organization)
+  - [Get Organization Statistics](#get-organization-statistics)
+  - [Get Superadmins](#get-superadmins)
+  - [Manage Superadmin](#manage-superadmin)
+  - [Get Organization Subscription Status](#get-organization-subscription-status)
+  - [Update Organization Subscription](#update-organization-subscription)
 - [Authentication Endpoints](#authentication-endpoints)
   - [Register User](#register-user)
   - [Login User](#login-user)
   - [Get Current User](#get-current-user)
+  - [Logout User](#logout-user)
+  - [Check Organization Login Status](#check-organization-login-status)
 - [Function Endpoints](#function-endpoints)
   - [Create Function](#create-function)
   - [Get All Functions](#get-all-functions)
@@ -112,15 +128,887 @@ All endpoints are relative to the base URL:
 http://localhost:5001/api
 ```
 
+# Organization Endpoints
+
+## Overview
+
+The MOI Software Online API provides comprehensive organization management capabilities, including CRUD operations, subscription management, and superadmin controls. All organization-specific endpoints now use `org_name` as the unique identifier for better readability and consistency.
+
+## Public Endpoints
+
+### Get Public Organizations
+
+Retrieves a list of all public organizations for login dropdown.
+
+- **URL**: `/api/organizations/public`
+- **Method**: `GET`
+- **Auth Required**: No
+- **Cache**: 300 seconds
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/organizations/public
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "count": 2,
+  "data": [
+    {
+      "org_name": "visaganorg",
+      "display_name": "Visagan Organization"
+    },
+    {
+      "org_name": "testorg",
+      "display_name": "Test Organization"
+    }
+  ]
+}
+```
+
+### Check Organization Exists
+
+Checks if an organization with the specified name already exists.
+
+- **URL**: `/api/organizations/check/:orgName`
+- **Method**: `GET`
+- **Auth Required**: No
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/organizations/check/visaganorg
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "exists": true,
+  "data": {
+    "org_id": "org_1721076935923",
+    "display_name": "Visagan Organization"
+  }
+}
+```
+
+**Not Found Response**:
+
+```json
+{
+  "success": true,
+  "exists": false,
+  "data": null
+}
+```
+
+### Get Subscription Plans
+
+Retrieves detailed information about all available subscription plans with base recommendations.
+
+- **URL**: `/api/organizations/subscription-plans`
+- **Method**: `GET`
+- **Auth Required**: No
+- **Cache**: 3600 seconds (1 hour)
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/organizations/subscription-plans
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "plans": [
+      {
+        "plan": "basic",
+        "name": "Basic Tier",
+        "base_price": 2500,
+        "currency": "INR",
+        "billing_period": "monthly",
+        "base_functions": 10,
+        "features": [
+          "Unlimited user accounts",
+          "Base 10 Functions/Events per month (customizable)",
+          "Basic reporting features",
+          "Standard email support"
+        ]
+      },
+      {
+        "plan": "standard",
+        "name": "Standard Tier",
+        "base_price": 4500,
+        "currency": "INR",
+        "billing_period": "monthly",
+        "base_functions": 25,
+        "features": [
+          "Unlimited user accounts",
+          "Base 25 Functions/Events per month (customizable)",
+          "Function Analytics Reports included",
+          "Advanced reporting capabilities",
+          "Priority email support"
+        ]
+      },
+      {
+        "plan": "premium",
+        "name": "Premium Tier",
+        "base_price": 7500,
+        "currency": "INR",
+        "billing_period": "monthly",
+        "base_functions": 40,
+        "features": [
+          "Unlimited user accounts",
+          "Base 40 Functions/Events per month (customizable)",
+          "Advanced Reporting with Charts (exclusive feature)",
+          "Function Analytics Reports",
+          "Comprehensive business analytics",
+          "Premium priority support (phone + email)"
+        ]
+      }
+    ],
+    "note": "All subscription tiers include unlimited user accounts. Function limits are customizable by administrators."
+  }
+}
+```
+
+## Authenticated Endpoints
+
+### Get All Organizations
+
+Retrieves a list of all organizations with pagination and search. Requires superadmin privileges.
+
+- **URL**: `/api/organizations`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token + Superadmin)
+- **Cache**: 300 seconds
+
+**Query Parameters**:
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 10)
+- `search` (optional): Search term for org_name or display_name
+
+**Example Request**:
+
+```bash
+curl -X GET "http://localhost:5001/api/organizations?page=1&limit=10&search=visa" \
+  -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "count": 2,
+  "pagination": {
+    "current": 1,
+    "pages": 1,
+    "total": 2
+  },
+  "data": [
+    {
+      "_id": "687491c3c5163ff94f4c4fa4",
+      "org_id": "org_1721076935923",
+      "org_name": "visaganorg",
+      "display_name": "Visagan Organization",
+      "settings": {
+        "allow_multiple_sessions": false,
+        "session_timeout_minutes": 60
+      },
+      "created_at": "2025-07-01T10:24:56.789Z",
+      "updated_at": "2025-07-01T10:24:56.789Z"
+    },
+    {
+      "_id": "687491e8c5163ff94f4c4fa5",
+      "org_id": "org_1721076945789",
+      "org_name": "testorg",
+      "display_name": "Test Organization",
+      "settings": {
+        "allow_multiple_sessions": true,
+        "session_timeout_minutes": 120
+      },
+      "created_at": "2025-07-03T09:12:34.123Z",
+      "updated_at": "2025-07-03T09:12:34.123Z"
+    }
+  ]
+}
+```
+
+### Create Organization
+
+Creates a new organization. Requires superadmin privileges.
+
+- **URL**: `/api/organizations`
+- **Method**: `POST`
+- **Auth Required**: Yes (JWT Token + Superadmin)
+- **Content Type**: `application/json`
+
+**Request Body**:
+
+```json
+{
+  "display_name": "New Organization",
+  "org_name": "neworg",
+  "settings": {
+    "allow_multiple_sessions": false,
+    "session_timeout_minutes": 60
+  }
+}
+```
+
+**Example Request**:
+
+```bash
+curl -X POST http://localhost:5001/api/organizations \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN" \
+  -d '{
+    "display_name": "New Organization",
+    "org_name": "neworg",
+    "settings": {
+      "allow_multiple_sessions": false,
+      "session_timeout_minutes": 60
+    }
+  }'
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "687492a9c5163ff94f4c4fa6",
+    "org_id": "org_1721077289123",
+    "org_name": "neworg",
+    "display_name": "New Organization",
+    "settings": {
+      "allow_multiple_sessions": false,
+      "session_timeout_minutes": 60
+    },
+    "created_at": "2025-07-14T15:30:45.678Z",
+    "updated_at": "2025-07-14T15:30:45.678Z"
+  }
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Organization already exists"
+}
+```
+
+### Get Single Organization
+
+Retrieves a specific organization by org_name. Requires superadmin privileges.
+
+- **URL**: `/api/organizations/:orgName`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token + Superadmin)
+- **Cache**: 300 seconds
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/organizations/visaganorg \
+  -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "687491c3c5163ff94f4c4fa4",
+    "org_id": "org_1721076935923",
+    "org_name": "visaganorg",
+    "display_name": "Visagan Organization",
+    "settings": {
+      "allow_multiple_sessions": false,
+      "session_timeout_minutes": 60
+    },
+    "created_at": "2025-07-01T10:24:56.789Z",
+    "updated_at": "2025-07-01T10:24:56.789Z"
+  }
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Organization not found with org_name of visaganorg"
+}
+```
+
+### Update Organization
+
+Updates a specific organization by org_name. Requires superadmin privileges.
+
+- **URL**: `/api/organizations/:orgName`
+- **Method**: `PUT`
+- **Auth Required**: Yes (JWT Token + Superadmin)
+- **Content Type**: `application/json`
+
+**Request Body**:
+
+```json
+{
+  "display_name": "Updated Organization Name",
+  "settings": {
+    "allow_multiple_sessions": true,
+    "session_timeout_minutes": 120
+  }
+}
+```
+
+**Example Request**:
+
+```bash
+curl -X PUT http://localhost:5001/api/organizations/visaganorg \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN" \
+  -d '{
+    "display_name": "Updated Organization Name",
+    "settings": {
+      "allow_multiple_sessions": true,
+      "session_timeout_minutes": 120
+    }
+  }'
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "687491c3c5163ff94f4c4fa4",
+    "org_id": "org_1721076935923",
+    "org_name": "visaganorg",
+    "display_name": "Updated Organization Name",
+    "settings": {
+      "allow_multiple_sessions": true,
+      "session_timeout_minutes": 120
+    },
+    "created_at": "2025-07-01T10:24:56.789Z",
+    "updated_at": "2025-07-14T16:45:12.345Z"
+  }
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Organization name cannot be changed as it would break database references"
+}
+```
+
+### Delete Organization
+
+Deletes a specific organization by org_name. Requires superadmin privileges.
+
+- **URL**: `/api/organizations/:orgName`
+- **Method**: `DELETE`
+- **Auth Required**: Yes (JWT Token + Superadmin)
+
+**Example Request**:
+
+```bash
+curl -X DELETE http://localhost:5001/api/organizations/visaganorg \
+  -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {}
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Cannot delete organization with active users. Delete all users first."
+}
+```
+
+### Get Organization Statistics
+
+Retrieves statistics about organizations and user distribution. Requires superadmin privileges.
+
+- **URL**: `/api/organizations/stats`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token + Superadmin)
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/organizations/stats \
+  -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "total_organizations": 3,
+    "organizations_by_users": [
+      {
+        "org_name": "visaganorg",
+        "count": 25,
+        "display_name": "Visagan Organization"
+      },
+      {
+        "org_name": "testorg",
+        "count": 12,
+        "display_name": "Test Organization"
+      },
+      {
+        "org_name": "neworg",
+        "count": 5,
+        "display_name": "New Organization"
+      }
+    ]
+  }
+}
+```
+
+## Superadmin Management
+
+### Get Superadmins
+
+Retrieves a list of all superadmins. Requires superadmin privileges.
+
+- **URL**: `/api/organizations/superadmins`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token + Superadmin)
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/organizations/superadmins \
+  -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "count": 2,
+  "data": [
+    {
+      "_id": "682235dbf95499dd50469312",
+      "username": "superadmin",
+      "email": "superadmin@example.com",
+      "created_at": "2025-07-10T08:15:23.456Z"
+    },
+    {
+      "_id": "682235dbf95499dd50469315",
+      "username": "anothersuper",
+      "email": "another@example.com",
+      "created_at": "2025-07-12T11:42:18.789Z"
+    }
+  ]
+}
+```
+
+### Manage Superadmin
+
+Promotes or demotes a user's superadmin privileges. Requires superadmin privileges.
+
+- **URL**: `/api/organizations/superadmins`
+- **Method**: `POST`
+- **Auth Required**: Yes (JWT Token + Superadmin)
+- **Content Type**: `application/json`
+
+**Request Body**:
+
+```json
+{
+  "userId": "682235dbf95499dd50469314",
+  "action": "promote"
+}
+```
+
+**Example Request**:
+
+```bash
+curl -X POST http://localhost:5001/api/organizations/superadmins \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN" \
+  -d '{
+    "userId": "682235dbf95499dd50469314",
+    "action": "promote"
+  }'
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "_id": "682235dbf95499dd50469314",
+      "username": "newadmin",
+      "email": "newadmin@example.com",
+      "isSuperAdmin": true
+    },
+    "message": "User promoted to superadmin successfully"
+  }
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "You cannot demote yourself from superadmin"
+}
+```
+
+## Organization Subscription Management
+
+### Get Organization Subscription Status
+
+Retrieves the subscription status for an organization. Accessible by:
+- SuperAdmins (can access any organization)
+- Admins (can access any organization)  
+- Regular users (can access their own organization only)
+
+- **URL**: `/api/organizations/:orgName/subscription`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token)
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/organizations/visaganorg/subscription \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "org_id": "org_1721076935923",
+    "org_name": "visaganorg",
+    "display_name": "Visagan Organization",
+    "subscription": {
+      "subscription_plan": "basic",
+      "max_functions": 10,
+      "functions_created": 7,
+      "functions_remaining": 3,
+      "last_updated": "2025-07-14T15:30:45.678Z"
+    },
+    "plan_details": {
+      "plan_name": "basic",
+      "plan_display_name": "Basic Tier",
+      "base_price": 2500,
+      "base_functions": 10,
+      "currency": "INR"
+    }
+  }
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Not authorized to access this organization subscription"
+}
+```
+
+### Update Organization Subscription Limits
+
+Updates the subscription plan and/or maximum number of functions an organization can create. Superadmin only.
+
+- **URL**: `/api/organizations/:orgName/subscription`
+- **Method**: `PUT`
+- **Auth Required**: Yes (JWT Token with Superadmin privileges)
+- **Content Type**: `application/json`
+
+**Request Body Options**:
+
+**Option 1: Update subscription plan (automatically sets max_functions)**
+```json
+{
+  "subscription_plan": "standard"
+}
+```
+
+**Option 2: Update max_functions only (keeps existing plan)**
+```json
+{
+  "max_functions": 50
+}
+```
+
+**Option 3: Update both (max_functions must match plan limits)**
+```json
+{
+  "subscription_plan": "premium",
+  "max_functions": 40
+}
+```
+
+**Example Request (Change to Standard Plan):**
+
+```bash
+curl -X PUT http://localhost:5001/api/organizations/visaganorg/subscription \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN" \
+  -d '{
+    "subscription_plan": "standard"
+  }'
+```
+
+**Example Request (Custom max_functions):**
+
+```bash
+curl -X PUT http://localhost:5001/api/organizations/visaganorg/subscription \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_SUPERADMIN_JWT_TOKEN" \
+  -d '{
+    "max_functions": 50
+  }'
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "org_id": "org_1721076935923",
+    "org_name": "visaganorg",
+    "subscription": {
+      "subscription_plan": "standard",
+      "max_functions": 25,
+      "functions_created": 7,
+      "functions_remaining": 18,
+      "last_updated": "2025-07-14T16:45:12.345Z"
+    },
+    "plan_details": {
+      "plan_name": "standard",
+      "monthly_price": 4500,
+      "currency": "INR"
+    }
+  }
+}
+```
+
+**Error Responses**:
+
+```json
+{
+  "success": false,
+  "error": "Invalid subscription plan. Must be basic, standard, or premium"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "max_functions for standard plan must be 25"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "max_functions must be a positive number"
+}
+```
+
+## Subscription Plans
+
+The MOI Software Online API now includes a comprehensive subscription system with three tiers:
+
+### Available Plans
+
+1. **Basic Tier - ₹2,500/month**
+   - 10 Functions/Events per month
+   - Unlimited user accounts
+   - Basic reporting features
+   - Standard email support
+
+2. **Standard Tier - ₹4,500/month**  
+   - 25 Functions/Events per month
+   - Unlimited user accounts
+   - Function Analytics Reports included
+   - Advanced reporting capabilities
+   - Priority email support
+
+3. **Premium Tier - ₹7,500/month**
+   - 40 Functions/Events per month
+   - Unlimited user accounts
+   - Advanced Reporting with Charts (exclusive feature)
+   - Function Analytics Reports
+   - Comprehensive business analytics
+   - Premium priority support (phone + email)
+
+### Plan Management
+
+- **Default Plan**: New organizations are automatically assigned the "basic" plan
+- **Plan Changes**: SuperAdmins can upgrade/downgrade organizations to any plan
+- **Custom Limits**: SuperAdmins can set custom `max_functions` beyond standard plan limits
+- **Auto-Enforcement**: The system automatically enforces function creation limits based on the active plan
+
+## Function Creation Limit Check
+
+When an organization attempts to create a new function, the system checks subscription limits:
+
+1. **Within Limit**: If `functions_created < max_functions`, the function is created and counter incremented
+2. **Limit Reached**: If `functions_created >= max_functions`, creation is rejected with:
+
+```json
+{
+  "success": false,
+  "error": "Function creation limit reached (10/10). Please contact the Software Administrators at Visainnovations to increase your limit."
+}
+```
+
+## Data Schema
+
+### Organization Schema (Subscription Fields)
+
+```typescript
+subscription: {
+  subscription_plan: {
+    type: String,
+    enum: ['basic', 'standard', 'premium'],
+    default: 'basic'
+  },
+  max_functions: {
+    type: Number,
+    default: 10,
+    min: 0
+  },
+  functions_created: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  last_updated: {
+    type: Date,
+    default: Date.now
+  },
+  updated_by: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
+}
+```
+
+### Subscription Plan Constants
+
+```typescript
+const SUBSCRIPTION_LIMITS = {
+  basic: { max_functions: 10, price: 2500 },
+  standard: { max_functions: 25, price: 4500 },
+  premium: { max_functions: 40, price: 7500 }
+};
+```
+
+## Authentication & Authorization
+
+### Access Levels
+
+1. **Public**: No authentication required
+   - Get public organizations
+   - Check organization exists
+   - Get subscription plans
+
+2. **Authenticated**: Valid JWT token required
+   - Get own organization subscription
+
+3. **Admin**: JWT token + `isAdmin: true`
+   - Can access any organization subscription
+
+4. **SuperAdmin**: JWT token + `isSuperAdmin: true`
+   - Full access to all endpoints
+   - Can modify subscription limits and plans
+   - Can manage other superadmins
+
+### JWT Token Format
+
+Include the JWT token in the Authorization header:
+
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+The token should contain:
+- `id`: User ID
+- `org_name`: User's organization name
+- `isAdmin`: Admin status (optional)
+- `isSuperAdmin`: SuperAdmin status (optional)
+
+## Error Responses
+
+All endpoints return consistent error responses:
+
+```json
+{
+  "success": false,
+  "error": "Error message description"
+}
+```
+
+Common HTTP status codes:
+- `200`: Success
+- `201`: Created
+- `400`: Bad Request
+- `401`: Unauthorized
+- `403`: Forbidden
+- `404`: Not Found
+- `500`: Internal Server Error
+
+## Rate Limiting & Caching
+
+- **Cache**: Some GET endpoints are cached for 300 seconds (5 minutes)
+- **Rate Limiting**: Apply standard API rate limiting practices
+- **Cache Invalidation**: Automatic cache invalidation on data modifications
+
 ## Authentication Endpoints
 
 ### Register User
 
-Creates a new user account.
+Creates a new user account in a specific organization.
 
 - **URL**: `/auth/register`
 - **Method**: `POST`
-- **Auth Required**: No
+- **Auth Required**: No (or Yes with Superadmin privileges to create admin users)
 - **Content Type**: `application/json`
 
 **Request Body**:
@@ -129,11 +1017,13 @@ Creates a new user account.
 {
   "username": "testuser",
   "email": "testuser@example.com",
-  "password": "password123"
+  "password": "password123",
+  "org_name": "adminorg",
+  "isAdmin": false
 }
 ```
 
-**Example Request**:
+**Example Request (regular user)**:
 
 ```bash
 curl -X POST http://localhost:5001/api/auth/register \
@@ -141,7 +1031,23 @@ curl -X POST http://localhost:5001/api/auth/register \
   -d '{
     "username": "testuser",
     "email": "testuser@example.com",
-    "password": "password123"
+    "password": "password123",
+    "org_name": "adminorg"
+  }'
+```
+
+**Example Request (admin user - requires superadmin authentication)**:
+
+```bash
+curl -X POST http://localhost:5001/api/auth/register \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjIzNWRiZjk1NDk5ZGQ1MDQ2OTMxMiIsImlhdCI6MTc0NzA3Mjk3OCwiZXhwIjoxNzQ5NjY0OTc4fQ.Fc8FZpJnRAoN6v7d6eqNbRQFYugj1oh-3lLEh4kvYVk" \
+  -d '{
+    "username": "adminuser",
+    "email": "adminuser@example.com",
+    "password": "password123",
+    "org_name": "adminorg",
+    "isAdmin": true
   }'
 ```
 
@@ -155,6 +1061,9 @@ curl -X POST http://localhost:5001/api/auth/register \
     "username": "testuser",
     "email": "testuser@example.com",
     "isAdmin": false,
+    "isSuperAdmin": false,
+    "org_id": "687491c3c5163ff94f4c4fa4",
+    "org_name": "adminorg",
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjIzNTk3Zjk1NDk5ZGQ1MDQ2OTMwZiIsImlhdCI6MTc0NzA3MjQwNywiZXhwIjoxNzQ5NjY0NDA3fQ.CVANSH6mcA3E0eV8I-UuGeuGyWWkbNL9fWZLxHZmfWA"
   }
 }
@@ -165,7 +1074,16 @@ curl -X POST http://localhost:5001/api/auth/register \
 ```json
 {
   "success": false,
-  "error": "User already exists"
+  "error": "User already exists in this organization"
+}
+```
+
+OR
+
+```json
+{
+  "success": false,
+  "error": "Not authorized to create admin users"
 }
 ```
 
@@ -182,8 +1100,9 @@ Authenticates a user and returns a JWT token.
 
 ```json
 {
-  "email": "admin@example.com",
-  "password": "adminpassword"
+  "email": "superadmin@example.com",
+  "password": "12345678",
+  "org_name": "adminorg"
 }
 ```
 
@@ -193,8 +1112,9 @@ Authenticates a user and returns a JWT token.
 curl -X POST http://localhost:5001/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "admin@example.com",
-    "password": "adminpassword"
+    "email": "superadmin@example.com",
+    "password": "12345678",
+    "org_name": "adminorg"
   }'
 ```
 
@@ -205,15 +1125,27 @@ curl -X POST http://localhost:5001/api/auth/login \
   "success": true,
   "data": {
     "_id": "682235dbf95499dd50469312",
-    "username": "adminuser",
-    "email": "admin@example.com",
+    "username": "superadmin",
+    "email": "superadmin@example.com",
     "isAdmin": true,
+    "isSuperAdmin": true,
+    "org_id": "687491c3c5163ff94f4c4fa4",
+    "org_name": "adminorg",
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjIzNWRiZjk1NDk5ZGQ1MDQ2OTMxMiIsImlhdCI6MTc0NzA3Mjk3OCwiZXhwIjoxNzQ5NjY0OTc4fQ.Fc8FZpJnRAoN6v7d6eqNbRQFYugj1oh-3lLEh4kvYVk"
   }
 }
 ```
 
 **Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Organization name is required"
+}
+```
+
+OR
 
 ```json
 {
@@ -244,9 +1176,12 @@ curl -X GET http://localhost:5001/api/auth/me \
   "success": true,
   "data": {
     "_id": "682235dbf95499dd50469312",
-    "username": "adminuser",
-    "email": "admin@example.com",
-    "isAdmin": true
+    "username": "superadmin",
+    "email": "superadmin@example.com",
+    "isAdmin": true,
+    "isSuperAdmin": true,
+    "org_id": "687491c3c5163ff94f4c4fa4",
+    "org_name": "adminorg"
   }
 }
 ```
@@ -257,6 +1192,348 @@ curl -X GET http://localhost:5001/api/auth/me \
 {
   "success": false,
   "error": "Not authorized to access this route"
+}
+```
+
+### Logout User
+
+Logs out the currently authenticated user and invalidates their session.
+
+- **URL**: `/auth/logout`
+- **Method**: `POST`
+- **Auth Required**: Yes (JWT Token)
+
+**Example Request**:
+
+```bash
+curl -X POST http://localhost:5001/api/auth/logout \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MjIzNWRiZjk1NDk5ZGQ1MDQ2OTMxMiIsImlhdCI6MTc0NzA3Mjk3OCwiZXhwIjoxNzQ5NjY0OTc4fQ.Fc8FZpJnRAoN6v7d6eqNbRQFYugj1oh-3lLEh4kvYVk"
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Logged out successfully"
+  }
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Not authorized to access this route"
+}
+```
+
+### Check Organization Login Status
+
+Checks if an organization is available for login and returns its status.
+
+- **URL**: `/auth/organization-status/:orgName`
+- **Method**: `GET`
+- **Auth Required**: No
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/auth/organization-status/adminorg
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "exists": true,
+    "status": "active",
+    "display_name": "Admin Organization",
+    "org_id": "org_1721076935923"
+  }
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Organization not found"
+}
+```
+
+OR
+
+```json
+{
+  "success": true,
+  "data": {
+    "exists": true,
+    "status": "suspended",
+    "display_name": "Suspended Organization",
+    "message": "This organization has been suspended. Please contact support for more information."
+  }
+}
+```
+
+### Forgot Password
+
+Initiates the forgot password flow by verifying email and organization, then returning security questions.
+
+- **URL**: `/auth/forgot-password`
+- **Method**: `POST`
+- **Auth Required**: No
+- **Content Type**: `application/json`
+
+**Request Body**:
+
+```json
+{
+  "email": "testuser@example.com",
+  "org_name": "adminorg"
+}
+```
+
+**Example Request**:
+
+```bash
+curl -X POST http://localhost:5001/api/auth/forgot-password \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "testuser@example.com",
+    "org_name": "adminorg"
+  }'
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "userId": "68223597f95499dd5046930f",
+    "questions": [
+      {
+        "question": "What is your mother's maiden name?",
+        "questionId": "507f1f77bcf86cd799439011"
+      },
+      {
+        "question": "What was the name of your first pet?",
+        "questionId": "507f1f77bcf86cd799439012"
+      }
+    ]
+  }
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Email and organization name are required"
+}
+```
+
+OR
+
+```json
+{
+  "success": false,
+  "error": "Security questions not set up for this account"
+}
+```
+
+### Reset Password
+
+Verifies security answers and resets the user's password.
+
+- **URL**: `/auth/reset-password`
+- **Method**: `POST`
+- **Auth Required**: No
+- **Content Type**: `application/json`
+
+**Request Body**:
+
+```json
+{
+  "userId": "68223597f95499dd5046930f",
+  "answers": [
+    {
+      "questionId": "507f1f77bcf86cd799439011",
+      "answer": "Smith"
+    },
+    {
+      "questionId": "507f1f77bcf86cd799439012",
+      "answer": "Fluffy"
+    }
+  ],
+  "newPassword": "newPassword123"
+}
+```
+
+**Example Request**:
+
+```bash
+curl -X POST http://localhost:5001/api/auth/reset-password \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "68223597f95499dd5046930f",
+    "answers": [
+      {
+        "questionId": "507f1f77bcf86cd799439011",
+        "answer": "Smith"
+      },
+      {
+        "questionId": "507f1f77bcf86cd799439012",
+        "answer": "Fluffy"
+      }
+    ],
+    "newPassword": "newPassword123"
+  }'
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "message": "Password reset successful. Please login with your new password."
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "Security answers do not match"
+}
+```
+
+OR
+
+```json
+{
+  "success": false,
+  "error": "Password must be at least 6 characters"
+}
+```
+
+### Set Security Questions
+
+Allows authenticated users to set their security questions for password recovery.
+
+- **URL**: `/auth/security-questions`
+- **Method**: `POST`
+- **Auth Required**: Yes (JWT Token)
+- **Content Type**: `application/json`
+
+**Request Body**:
+
+```json
+{
+  "questions": [
+    {
+      "question": "What is your mother's maiden name?",
+      "answer": "Smith"
+    },
+    {
+      "question": "What was the name of your first pet?",
+      "answer": "Fluffy"
+    }
+  ]
+}
+```
+
+**Example Request**:
+
+```bash
+curl -X POST http://localhost:5001/api/auth/security-questions \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "questions": [
+      {
+        "question": "What is your mother'\''s maiden name?",
+        "answer": "Smith"
+      },
+      {
+        "question": "What was the name of your first pet?",
+        "answer": "Fluffy"
+      }
+    ]
+  }'
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "message": "Security questions set successfully"
+}
+```
+
+**Error Response**:
+
+```json
+{
+  "success": false,
+  "error": "At least 2 security questions are required"
+}
+```
+
+### Get Security Questions
+
+Retrieves the current user's security questions (without answers).
+
+- **URL**: `/auth/security-questions`
+- **Method**: `GET`
+- **Auth Required**: Yes (JWT Token)
+
+**Example Request**:
+
+```bash
+curl -X GET http://localhost:5001/api/auth/security-questions \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+**Success Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "questions": [
+      {
+        "question": "What is your mother's maiden name?",
+        "questionId": "507f1f77bcf86cd799439011"
+      },
+      {
+        "question": "What was the name of your first pet?",
+        "questionId": "507f1f77bcf86cd799439012"
+      }
+    ],
+    "hasSecurityQuestions": true
+  }
+}
+```
+
+**Response when no security questions are set**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "questions": [],
+    "hasSecurityQuestions": false
+  }
 }
 ```
 

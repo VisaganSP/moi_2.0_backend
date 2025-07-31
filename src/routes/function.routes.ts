@@ -50,7 +50,7 @@ router.route('/')
 
 router.route('/:id')
   .get(getFunctionById)  // All authenticated users
-  .put(admin, updateFunction)  // Admin only
+  .put(updateFunction)  // Admin or any other authenticated user only
   .delete(admin, deleteFunction);  // Admin only
 
 router.put('/:id/restore', admin, restoreFunction);  // Admin only

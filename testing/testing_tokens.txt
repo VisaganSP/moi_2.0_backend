@@ -1,3 +1,9 @@
+Super Admin:
+Org Name - Admin Organization
+Email - superadmin@example.com
+Password - 12345678
+Token - eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzQ5MjQ1YzUxNjNmZjk0ZjRjNGZhNSIsIm9yZ19pZCI6IjY4NzQ5MWMzYzUxNjNmZjk0ZjRjNGZhNCIsIm9yZ19uYW1lIjoiQWRtaW4gT3JnYW5pemF0aW9uIiwiaWF0IjoxNzUyNDcwOTkwLCJleHAiOjE3NTUwNjI5OTB9.kCsVFHvMLbk0ohhFrqjlbYlRMwbFTTuondmmRkYSe9M
+
 Admin:
 Email - visagan@example.com
 Password - 12345678

@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import asyncHandler from 'express-async-handler';
-import EditLog from '../models/EditLog.model';
 import { ErrorResponse } from '../utils/errorResponse';
-import { AuthenticatedRequest } from '../types';
+import { AuthenticatedRequest, EditLogDocument } from '../types';
 import { invalidateCacheByPattern } from '../utils/cacheUtils';
+import { getOrganizationModel } from '../utils/dynamicCollections';
 
 // @desc    Create a new edit log
 // @route   POST /api/edit-logs
@@ -11,13 +11,35 @@ import { invalidateCacheByPattern } from '../utils/cacheUtils';
 export const createEditLog = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      // Check if user exists
+      if (!req.user) {
+        next(new ErrorResponse('User not found', 401));
+        return;
+      }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      const orgId = req.user.org_id;
+      
+      if (!orgName || !orgId) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+
+      // Get the organization-specific EditLog model
+      const EditLogModel = getOrganizationModel<EditLogDocument>(orgName, 'edit_logs');
+      
       const logData = req.body;
       
       // Add the current user as the creator
-      logData.created_by = req.user?._id;
+      logData.created_by = req.user._id;
       
-      // Create edit log
-      const editLog = await EditLog.create(logData);
+      // Add organization info
+      logData.org_id = orgId;
+      logData.org_name = orgName;
+      
+      // Create edit log in the organization-specific collection
+      const editLog = await EditLogModel.create(logData);
 
       // Invalidate any relevant cache
       await invalidateCacheByPattern('api:/edit-logs*');
@@ -43,11 +65,28 @@ export const createEditLog = asyncHandler(
 export const getEditLogs = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      // Check if user exists and is admin
+      if (!req.user) {
+        next(new ErrorResponse('User not found', 401));
+        return;
+      }
+      
       // Check if user is admin
-      if (!req.user?.isAdmin) {
+      if (!req.user.isAdmin) {
         next(new ErrorResponse('Not authorized as an admin', 403));
         return;
       }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+
+      // Get the organization-specific EditLog model
+      const EditLogModel = getOrganizationModel<EditLogDocument>(orgName, 'edit_logs');
 
       // Invalidate cache to ensure fresh data
       await invalidateCacheByPattern('api:/edit-logs*');
@@ -84,7 +123,7 @@ export const getEditLogs = asyncHandler(
       console.log('Query for edit logs:', JSON.stringify(query));
 
       // Get total count BEFORE pagination
-      const total = await EditLog.countDocuments(query);
+      const total = await EditLogModel.countDocuments(query);
       console.log('Total edit logs found:', total);
 
       // Parse pagination parameters
@@ -93,7 +132,7 @@ export const getEditLogs = asyncHandler(
       const startIndex = (pageNum - 1) * limitNum;
 
       // Execute query with pagination
-      const editLogs = await EditLog.find(query)
+      const editLogs = await EditLogModel.find(query)
         .sort({ created_at: -1 })
         .skip(startIndex)
         .limit(limitNum)
@@ -135,11 +174,28 @@ export const getEditLogs = asyncHandler(
 export const getEditLogsByTarget = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      // Check if user exists
+      if (!req.user) {
+        next(new ErrorResponse('User not found', 401));
+        return;
+      }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+
+      // Get the organization-specific EditLog model
+      const EditLogModel = getOrganizationModel<EditLogDocument>(orgName, 'edit_logs');
+      
       const { targetType, targetId } = req.params;
       const { page = 1, limit = 10 } = req.query;
 
       // Validate target type
-      if (!['Function', 'Payer'].includes(targetType)) {
+      if (!['Function', 'Payer', 'Organization', 'User'].includes(targetType)) {
         next(new ErrorResponse(`Invalid target type: ${targetType}`, 400));
         return;
       }
@@ -156,7 +212,7 @@ export const getEditLogsByTarget = asyncHandler(
       console.log('Query for target edit logs:', JSON.stringify(query));
 
       // Get total count BEFORE pagination
-      const total = await EditLog.countDocuments(query);
+      const total = await EditLogModel.countDocuments(query);
       console.log(`Total edit logs for ${targetType} ${targetId}:`, total);
 
       // Parse pagination parameters
@@ -165,7 +221,7 @@ export const getEditLogsByTarget = asyncHandler(
       const startIndex = (pageNum - 1) * limitNum;
 
       // Execute query with pagination
-      const editLogs = await EditLog.find(query)
+      const editLogs = await EditLogModel.find(query)
         .sort({ created_at: -1 })
         .skip(startIndex)
         .limit(limitNum)
@@ -207,12 +263,29 @@ export const getEditLogsByTarget = asyncHandler(
 export const getEditLogsByUser = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      // Check if user exists
+      if (!req.user) {
+        next(new ErrorResponse('User not found', 401));
+        return;
+      }
+      
       // Check if user is admin
-      if (!req.user?.isAdmin) {
+      if (!req.user.isAdmin) {
         next(new ErrorResponse('Not authorized as an admin', 403));
         return;
       }
 
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+
+      // Get the organization-specific EditLog model
+      const EditLogModel = getOrganizationModel<EditLogDocument>(orgName, 'edit_logs');
+      
       const { userId } = req.params;
       const { page = 1, limit = 10 } = req.query;
 
@@ -227,7 +300,7 @@ export const getEditLogsByUser = asyncHandler(
       console.log('Query for user edit logs:', JSON.stringify(query));
 
       // Get total count BEFORE pagination
-      const total = await EditLog.countDocuments(query);
+      const total = await EditLogModel.countDocuments(query);
       console.log(`Total edit logs for user ${userId}:`, total);
 
       // Parse pagination parameters
@@ -236,7 +309,7 @@ export const getEditLogsByUser = asyncHandler(
       const startIndex = (pageNum - 1) * limitNum;
 
       // Execute query with pagination
-      const editLogs = await EditLog.find(query)
+      const editLogs = await EditLogModel.find(query)
         .sort({ created_at: -1 })
         .skip(startIndex)
         .limit(limitNum)
@@ -274,13 +347,30 @@ export const getEditLogsByUser = asyncHandler(
 export const getEditLogById = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      // Check if user exists
+      if (!req.user) {
+        next(new ErrorResponse('User not found', 401));
+        return;
+      }
+      
       // Check if user is admin
-      if (!req.user?.isAdmin) {
+      if (!req.user.isAdmin) {
         next(new ErrorResponse('Not authorized as an admin', 403));
         return;
       }
 
-      const editLog = await EditLog.findById(req.params.id)
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+
+      // Get the organization-specific EditLog model
+      const EditLogModel = getOrganizationModel<EditLogDocument>(orgName, 'edit_logs');
+      
+      const editLog = await EditLogModel.findById(req.params.id)
         .populate({
           path: 'created_by',
           select: 'username email'

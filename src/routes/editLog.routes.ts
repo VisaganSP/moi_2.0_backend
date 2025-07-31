@@ -5,7 +5,7 @@ import {
   getEditLogsByTarget,
   getEditLogsByUser,
   getEditLogById 
-} from '../controllers/editlog.controller';
+} from '../controllers/editLog.controller';
 import { protect, admin } from '../middleware/auth.middleware';
 import { cacheMiddleware } from '../middleware/cache.middleware';
 

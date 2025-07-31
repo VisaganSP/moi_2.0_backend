@@ -1,13 +1,12 @@
 import mongoose from 'mongoose';
 import { Request, Response, NextFunction } from 'express';
 import asyncHandler from 'express-async-handler';
-import Payer from '../models/Payer.model';
 import { ErrorResponse } from '../utils/errorResponse';
-import { AuthenticatedRequest } from '../types';
+import { AuthenticatedRequest, FunctionDocument, PayerDocument } from '../types';
 import { invalidateCacheByPattern } from '../utils/cacheUtils';
 import { findChangedFields, sanitizeForEditLog } from '../utils/editLogHelpers';
-import EditLog from '../models/EditLog.model';
 import { PAYER_SEARCHABLE_FIELDS } from '../utils/constants';
+import { getOrganizationModel } from '../utils/dynamicCollections';
 
 // @desc    Create a new payer
 // @route   POST /api/payers
@@ -20,12 +19,45 @@ export const createPayer = asyncHandler(
       return;
     }
 
-    // Add user id to request body
-    req.body.created_by = req.user._id;
+    // Get organization info from the authenticated user
+    const orgName = req.user.org_name;
+    const orgId = req.user.org_id;
+    
+    if (!orgName || !orgId) {
+      next(new ErrorResponse('User organization information is missing', 400));
+      return;
+    }
+
+    // Get the organization-specific Payer and Function models
+    const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+    const FunctionModel = getOrganizationModel<FunctionDocument>(orgName, 'functions');
+    
+    // Check if the function_id exists in this organization
+    if (!req.body.function_id) {
+      next(new ErrorResponse('Function ID is required', 400));
+      return;
+    }
+    
+    // Verify the function exists in this organization
+    const functionExists = await FunctionModel.findOne({
+      function_id: req.body.function_id,
+      is_deleted: false
+    });
+    
+    if (!functionExists) {
+      next(new ErrorResponse('Function not found in this organization', 404));
+      return;
+    }
+
+    // CHANGED: Add user email and name instead of ObjectId
+    req.body.created_by = req.user.email;
+    req.body.created_by_name = req.user.username;
+    req.body.org_id = orgId;
+    req.body.org_name = orgName;
 
     // Check if payer with the same phone number already exists IN THE SAME FUNCTION
     if (req.body.payer_phno && req.body.payer_phno.trim() !== '') {
-      const existingPayer = await Payer.findOne({
+      const existingPayer = await PayerModel.findOne({
         payer_phno: req.body.payer_phno,
         function_id: req.body.function_id,
         is_deleted: false // Only consider non-deleted payers
@@ -99,8 +131,8 @@ export const createPayer = asyncHandler(
       }
     }
 
-    // Create payer
-    const payer = await Payer.create(req.body);
+    // Create payer in the organization-specific collection
+    const payer = await PayerModel.create(req.body);
 
     // Invalidate cache
     await invalidateCacheByPattern('api:/payers*');
@@ -113,11 +145,29 @@ export const createPayer = asyncHandler(
     });
   }
 );
+
 // @desc    Get all payers
 // @route   GET /api/payers
 // @access  Private
 export const getPayers = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    // Check if user exists
+    if (!req.user) {
+      next(new ErrorResponse('User not found', 401));
+      return;
+    }
+
+    // Get organization info from the authenticated user
+    const orgName = req.user.org_name;
+    
+    if (!orgName) {
+      next(new ErrorResponse('User organization information is missing', 400));
+      return;
+    }
+
+    // Get the organization-specific Payer model
+    const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+    
     // Invalidate cache to ensure fresh data
     await invalidateCacheByPattern('api:/payers*');
     if (req.query.function_id) {
@@ -143,7 +193,7 @@ export const getPayers = asyncHandler(
     console.log('Query:', JSON.stringify(query));
 
     // Get total count BEFORE pagination
-    const total = await Payer.countDocuments(query);
+    const total = await PayerModel.countDocuments(query);
     console.log('Total matching documents:', total);
 
     // Add pagination if requested
@@ -155,7 +205,7 @@ export const getPayers = asyncHandler(
       const startIndex = (page - 1) * limit;
 
       // Execute query with pagination
-      payers = await Payer.find(query)
+      payers = await PayerModel.find(query)
         .sort({ created_at: -1 })
         .skip(startIndex)
         .limit(limit)
@@ -178,7 +228,7 @@ export const getPayers = asyncHandler(
       });
     } else {
       // No pagination, return all results
-      payers = await Payer.find(query)
+      payers = await PayerModel.find(query)
         .sort({ created_at: -1 })
         .lean(); // Use lean for performance
 
@@ -197,8 +247,25 @@ export const getPayers = asyncHandler(
 // @route   GET /api/payers/:id
 // @access  Private
 export const getPayerById = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const payer = await Payer.findOne({
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    // Check if user exists
+    if (!req.user) {
+      next(new ErrorResponse('User not found', 401));
+      return;
+    }
+
+    // Get organization info from the authenticated user
+    const orgName = req.user.org_name;
+    
+    if (!orgName) {
+      next(new ErrorResponse('User organization information is missing', 400));
+      return;
+    }
+
+    // Get the organization-specific Payer model
+    const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+    
+    const payer = await PayerModel.findOne({
       _id: req.params.id,
       is_deleted: false
     });
@@ -227,6 +294,18 @@ export const updatePayer = asyncHandler(
         return;
       }
 
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+
+      // Get the organization-specific Payer and EditLog models
+      const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+      const EditLogModel = getOrganizationModel(orgName, 'edit_logs');
+
       // Extract reason_for_edit from request body
       const { reason_for_edit, ...requestData } = req.body;
 
@@ -243,7 +322,7 @@ export const updatePayer = asyncHandler(
       });
 
       // Find payer by MongoDB _id
-      let payer = await Payer.findOne({
+      let payer = await PayerModel.findOne({
         _id: req.params.id,
         is_deleted: false
       });
@@ -404,7 +483,7 @@ export const updatePayer = asyncHandler(
       console.log('Final update data:', JSON.stringify(updateData, null, 2));
 
       // Update payer
-      payer = await Payer.findByIdAndUpdate(req.params.id, updateData, {
+      payer = await PayerModel.findByIdAndUpdate(req.params.id, updateData, {
         new: true,
         runValidators: true
       }).lean() as unknown as typeof payer;
@@ -418,8 +497,8 @@ export const updatePayer = asyncHandler(
       // Calculate which fields were changed
       const changedFields = findChangedFields(beforeValue, sanitizeForEditLog(payer));
 
-      // Create edit log
-      await EditLog.create({
+      // Create edit log in organization-specific collection
+      await EditLogModel.create({
         target_id: payer._id,
         target_type: 'Payer',
         action: 'update',
@@ -429,7 +508,9 @@ export const updatePayer = asyncHandler(
         changed_fields: changedFields,
         created_by: req.user._id,
         user_email: req.user.email,
-        user_name: req.user.username
+        user_name: req.user.username,
+        org_id: req.user.org_id,
+        org_name: req.user.org_name
       });
 
       // More aggressive cache invalidation with better logging
@@ -494,7 +575,18 @@ export const deletePayer = asyncHandler(
       return;
     }
 
-    const payer = await Payer.findOne({
+    // Get organization info from the authenticated user
+    const orgName = req.user.org_name;
+    
+    if (!orgName) {
+      next(new ErrorResponse('User organization information is missing', 400));
+      return;
+    }
+
+    // Get the organization-specific Payer model
+    const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+
+    const payer = await PayerModel.findOne({
       _id: req.params.id,
       is_deleted: false
     });
@@ -525,7 +617,24 @@ export const deletePayer = asyncHandler(
 // @route   GET /api/payers/deleted
 // @access  Private
 export const getDeletedPayers = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    // Check if user exists
+    if (!req.user) {
+      next(new ErrorResponse('User not found', 401));
+      return;
+    }
+
+    // Get organization info from the authenticated user
+    const orgName = req.user.org_name;
+    
+    if (!orgName) {
+      next(new ErrorResponse('User organization information is missing', 400));
+      return;
+    }
+
+    // Get the organization-specific Payer model
+    const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+
     // Build query for deleted payers
     const query: any = { is_deleted: true };
 
@@ -543,7 +652,7 @@ export const getDeletedPayers = asyncHandler(
     console.log('Query for deleted payers:', JSON.stringify(query));
 
     // Get total count BEFORE pagination
-    const total = await Payer.countDocuments(query);
+    const total = await PayerModel.countDocuments(query);
     console.log('Total deleted documents:', total);
 
     // Add pagination if requested
@@ -555,7 +664,7 @@ export const getDeletedPayers = asyncHandler(
       const startIndex = (page - 1) * limit;
 
       // Execute query with pagination
-      payers = await Payer.find(query)
+      payers = await PayerModel.find(query)
         .sort({ deleted_at: -1 })
         .skip(startIndex)
         .limit(limit)
@@ -578,7 +687,7 @@ export const getDeletedPayers = asyncHandler(
       });
     } else {
       // No pagination, return all results
-      payers = await Payer.find(query)
+      payers = await PayerModel.find(query)
         .sort({ deleted_at: -1 })
         .lean(); // Use lean for performance
 
@@ -598,7 +707,24 @@ export const getDeletedPayers = asyncHandler(
 // @access  Private
 export const restorePayer = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
-    const payer = await Payer.findOne({
+    // Check if user exists
+    if (!req.user) {
+      next(new ErrorResponse('User not found', 401));
+      return;
+    }
+
+    // Get organization info from the authenticated user
+    const orgName = req.user.org_name;
+    
+    if (!orgName) {
+      next(new ErrorResponse('User organization information is missing', 400));
+      return;
+    }
+
+    // Get the organization-specific Payer model
+    const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+
+    const payer = await PayerModel.findOne({
       _id: req.params.id,
       is_deleted: true
     });
@@ -629,8 +755,25 @@ export const restorePayer = asyncHandler(
 // @access  Private
 export const permanentlyDeletePayer = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    // Check if user exists
+    if (!req.user) {
+      next(new ErrorResponse('User not found', 401));
+      return;
+    }
+
+    // Get organization info from the authenticated user
+    const orgName = req.user.org_name;
+    
+    if (!orgName) {
+      next(new ErrorResponse('User organization information is missing', 400));
+      return;
+    }
+
+    // Get the organization-specific Payer model
+    const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+
     // Find the payer and ensure it's already soft-deleted
-    const payer = await Payer.findOne({
+    const payer = await PayerModel.findOne({
       _id: req.params.id,
       is_deleted: true
     });
@@ -644,7 +787,7 @@ export const permanentlyDeletePayer = asyncHandler(
     const functionId = payer.function_id;
 
     // Permanent delete
-    await Payer.findByIdAndDelete(req.params.id);
+    await PayerModel.findByIdAndDelete(req.params.id);
 
     // Invalidate cache
     await invalidateCacheByPattern('api:/payers*');
@@ -662,8 +805,25 @@ export const permanentlyDeletePayer = asyncHandler(
 // @route   GET /api/functions/:functionId/payers
 // @access  Private
 export const getPayersByFunction = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      // Check if user exists
+      if (!req.user) {
+        next(new ErrorResponse('User not found', 401));
+        return;
+      }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+
+      // Get the organization-specific Payer model
+      const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+      
       const functionId = req.params.functionId;
 
       // Force invalidate all related caches
@@ -697,7 +857,7 @@ export const getPayersByFunction = asyncHandler(
       console.log('Query for function payers:', JSON.stringify(query));
 
       // Get total count directly from database
-      const total = await Payer.countDocuments(query);
+      const total = await PayerModel.countDocuments(query);
       console.log('Total payers for function:', total);
 
       // Add pagination if requested
@@ -709,7 +869,7 @@ export const getPayersByFunction = asyncHandler(
         const startIndex = (page - 1) * limit;
 
         // Execute query with pagination, ensuring we get fresh data with lean()
-        payers = await Payer.find(query)
+        payers = await PayerModel.find(query)
           .sort({ created_at: -1 })
           .skip(startIndex)
           .limit(limit)
@@ -736,7 +896,7 @@ export const getPayersByFunction = asyncHandler(
         });
       } else {
         // No pagination, return all results
-        payers = await Payer.find(query)
+        payers = await PayerModel.find(query)
           .sort({ created_at: -1 })
           .lean();
 
@@ -761,8 +921,25 @@ export const getPayersByFunction = asyncHandler(
 // @route   GET /api/functions/:functionId/total-payment
 // @access  Private
 export const getTotalPaymentByFunction = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      // Check if user exists
+      if (!req.user) {
+        next(new ErrorResponse('User not found', 401));
+        return;
+      }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+
+      // Get the organization-specific Payer model
+      const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+      
       const functionId = req.params.functionId;
 
       // Force invalidate all related caches
@@ -781,7 +958,7 @@ export const getTotalPaymentByFunction = asyncHandler(
       console.log('Computing total payment for function:', functionId);
 
       // Get all payers for this function with is_deleted: false
-      const payers = await Payer.find({
+      const payers = await PayerModel.find({
         function_id: functionId,
         is_deleted: false
       }).lean();
@@ -837,8 +1014,25 @@ export const getTotalPaymentByFunction = asyncHandler(
 // @route   GET /api/payers/phone/:phoneNumber
 // @access  Private
 export const getPayerByPhoneNumber = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      // Check if user exists
+      if (!req.user) {
+        next(new ErrorResponse('User not found', 401));
+        return;
+      }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+
+      // Get the organization-specific Payer model
+      const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+      
       const phoneNumber = req.params.phoneNumber;
 
       // Check if phone number is provided
@@ -850,7 +1044,7 @@ export const getPayerByPhoneNumber = asyncHandler(
       console.log(`Searching for payer with phone number: ${phoneNumber}`);
 
       // Find payers with the given phone number that are not deleted
-      const payers = await Payer.find({
+      const payers = await PayerModel.find({
         payer_phno: phoneNumber,
         is_deleted: false
       }).lean();
@@ -882,12 +1076,29 @@ export const getPayerByPhoneNumber = asyncHandler(
 // @route   GET /api/payers/unique/names
 // @access  Private
 export const getUniquePayerNames = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      // Check if user exists
+      if (!req.user) {
+        next(new ErrorResponse('User not found', 401));
+        return;
+      }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+
+      // Get the organization-specific Payer model
+      const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+      
       console.log('Fetching unique payer names');
 
       // Get all unique payer names using MongoDB distinct operation
-      const uniqueNames = await Payer.distinct('payer_name', { is_deleted: false });
+      const uniqueNames = await PayerModel.distinct('payer_name', { is_deleted: false });
 
       console.log(`Found ${uniqueNames.length} unique payer names`);
 
@@ -907,12 +1118,29 @@ export const getUniquePayerNames = asyncHandler(
 // @route   GET /api/payers/unique/gifts
 // @access  Private
 export const getUniquePayerGifts = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      // Check if user exists
+      if (!req.user) {
+        next(new ErrorResponse('User not found', 401));
+        return;
+      }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+
+      // Get the organization-specific Payer model
+      const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+      
       console.log('Fetching unique payer gifts');
 
       // Get all unique payer gift names, filtering out empty strings
-      const uniqueGifts = await Payer.distinct('payer_gift_name', {
+      const uniqueGifts = await PayerModel.distinct('payer_gift_name', {
         is_deleted: false,
         payer_gift_name: { $ne: "" } // Filter out empty strings
       });
@@ -935,12 +1163,29 @@ export const getUniquePayerGifts = asyncHandler(
 // @route   GET /api/payers/unique/relations
 // @access  Private
 export const getUniquePayerRelations = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      // Check if user exists
+      if (!req.user) {
+        next(new ErrorResponse('User not found', 401));
+        return;
+      }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+
+      // Get the organization-specific Payer model
+      const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+      
       console.log('Fetching unique payer relations');
 
       // Get all unique payer relations
-      const uniqueRelations = await Payer.distinct('payer_relation', { is_deleted: false });
+      const uniqueRelations = await PayerModel.distinct('payer_relation', { is_deleted: false });
 
       console.log(`Found ${uniqueRelations.length} unique payer relations`);
 
@@ -960,12 +1205,29 @@ export const getUniquePayerRelations = asyncHandler(
 // @route   GET /api/payers/unique/cities
 // @access  Private
 export const getUniquePayerCities = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      // Check if user exists
+      if (!req.user) {
+        next(new ErrorResponse('User not found', 401));
+        return;
+      }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+
+      // Get the organization-specific Payer model
+      const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+      
       console.log('Fetching unique payer cities');
 
       // Get all unique payer cities
-      const uniqueCities = await Payer.distinct('payer_city', { is_deleted: false });
+      const uniqueCities = await PayerModel.distinct('payer_city', { is_deleted: false });
 
       console.log(`Found ${uniqueCities.length} unique payer cities`);
 
@@ -985,12 +1247,29 @@ export const getUniquePayerCities = asyncHandler(
 // @route   GET /api/payers/unique/works
 // @access  Private
 export const getUniquePayerWorks = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      // Check if user exists
+      if (!req.user) {
+        next(new ErrorResponse('User not found', 401));
+        return;
+      }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+
+      // Get the organization-specific Payer model
+      const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+      
       console.log('Fetching unique payer work types');
 
       // Get all unique payer work types
-      const uniqueWorks = await Payer.distinct('payer_work', { is_deleted: false });
+      const uniqueWorks = await PayerModel.distinct('payer_work', { is_deleted: false });
 
       console.log(`Found ${uniqueWorks.length} unique payer work types`);
 
@@ -1011,8 +1290,25 @@ export const getUniquePayerWorks = asyncHandler(
 // @route   GET /api/functions/:functionId/payers/search
 // @access  Private
 export const searchPayers = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      // Check if user exists
+      if (!req.user) {
+        next(new ErrorResponse('User not found', 401));
+        return;
+      }
+
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+
+      // Get the organization-specific Payer model
+      const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+      
       // Extract function ID from params if it's a function-specific search
       const functionId = req.params.functionId;
 
@@ -1152,13 +1448,13 @@ export const searchPayers = asyncHandler(
 
       // Execute search with count in parallel
       const [payers, totalCount] = await Promise.all([
-        Payer.find(query)
+        PayerModel.find(query)
           .sort(sortObject)
           .limit(limitNum)
           .skip(skip)
           .lean()
           .exec(),
-        Payer.countDocuments(query)
+        PayerModel.countDocuments(query)
       ]);
 
       // Calculate pagination metadata
@@ -1209,6 +1505,17 @@ export const bulkSoftDeletePayers = asyncHandler(
         return;
       }
 
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+
+      // Get the organization-specific Payer model
+      const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+      
       // Extract payer IDs from request body
       const { payer_ids } = req.body;
 
@@ -1228,7 +1535,7 @@ export const bulkSoftDeletePayers = asyncHandler(
       // Process each payer ID
       for (const payerId of payer_ids) {
         try {
-          const payer = await Payer.findOne({
+          const payer = await PayerModel.findOne({
             _id: payerId,
             is_deleted: false
           });
@@ -1288,6 +1595,17 @@ export const bulkRestorePayers = asyncHandler(
         return;
       }
 
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+
+      // Get the organization-specific Payer model
+      const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+      
       // Extract payer IDs from request body
       const { payer_ids } = req.body;
 
@@ -1307,7 +1625,7 @@ export const bulkRestorePayers = asyncHandler(
       // Process each payer ID
       for (const payerId of payer_ids) {
         try {
-          const payer = await Payer.findOne({
+          const payer = await PayerModel.findOne({
             _id: payerId,
             is_deleted: true
           });
@@ -1367,6 +1685,17 @@ export const bulkPermanentlyDeletePayers = asyncHandler(
         return;
       }
 
+      // Get organization info from the authenticated user
+      const orgName = req.user.org_name;
+      
+      if (!orgName) {
+        next(new ErrorResponse('User organization information is missing', 400));
+        return;
+      }
+
+      // Get the organization-specific Payer model
+      const PayerModel = getOrganizationModel<PayerDocument>(orgName, 'payers');
+      
       // Extract payer IDs from request body
       const { payer_ids } = req.body;
 
@@ -1386,7 +1715,7 @@ export const bulkPermanentlyDeletePayers = asyncHandler(
       // First, verify all payers exist and are soft-deleted
       for (const payerId of payer_ids) {
         try {
-          const payer = await Payer.findOne({
+          const payer = await PayerModel.findOne({
             _id: payerId,
             is_deleted: true
           });
@@ -1407,7 +1736,7 @@ export const bulkPermanentlyDeletePayers = asyncHandler(
       // Only proceed with deletion if we have valid payers to delete
       if (payer_ids.length > notFoundOrNotSoftDeleted.length) {
         // Perform bulk deletion for valid soft-deleted payers
-        const deleteResult = await Payer.deleteMany({
+        const deleteResult = await PayerModel.deleteMany({
           _id: { $in: payer_ids },
           is_deleted: true
         });
